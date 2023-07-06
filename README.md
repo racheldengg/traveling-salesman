@@ -11,3 +11,6 @@ algorithms to implement:
 6. 2 - opt
 7. 3 - opt
 8. lin-kernighan (probably won't get to :/)
+
+
+remove .DS_store in terminal: find . -name '.DS_Store' -type f -delete
