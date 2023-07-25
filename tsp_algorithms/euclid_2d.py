@@ -1,9 +1,14 @@
 import random
 import numpy as np
 import math
+import time
+import sys
+import itertools
+
 # trying to implement nearest neighbor
 # takes in arrays of respective x and y coordinates
 def nearest_neighbor(x_coordinates, y_coordinates):
+    start_time = time.time()
     visited = []
     tour = []
     total_number_cities = len(x_coordinates)
@@ -31,8 +36,9 @@ def nearest_neighbor(x_coordinates, y_coordinates):
         visited.append(nearest_city)
         total_distance += min_distance
         unvisited_cities = all_cities - set(visited)
+        print(f"Number of unvisited cities left: {len(unvisited_cities)}")
     # i have total distance, tour, average distance of each cluster, number of cities
-    # get data for: total distance, number of cities, how spread out the cities are from each other, how spread out the clusters are from each other
+    # get data for: total distance, number of cities, how spread out the cities are from each other, how spread out the clusters are from each other, number of clusters
 
     # get average distance between each point
     sum_distances = 0
@@ -45,9 +51,8 @@ def nearest_neighbor(x_coordinates, y_coordinates):
             sum_distances += distance
     
     average_distance_btw_points = sum_distances / (total_number_cities * (total_number_cities - 1) / 2)
-    print(total_distance)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed time: {elapsed_time:.6f} seconds")
+    print(f"Total distance: {total_distance}")
     return tour, distance, total_number_cities, average_distance_btw_points
-
-
-
-

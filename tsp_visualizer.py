@@ -1,6 +1,6 @@
 from asyncio import gather
 import matplotlib.pyplot as plt
-from tsp_algorithms import nearest_neighbor
+from tsp_algorithms.euclid_2d import nearest_neighbor
 
 def plot_coordinates(file_path):
     x_values = []
@@ -8,7 +8,10 @@ def plot_coordinates(file_path):
     node_labels = []
 
     with open(file_path, 'r') as file:
-        lines = file.readlines()[6:286]
+        end_file = len(file.readlines())
+        file.seek(0)
+        lines = file.readlines()[6:end_file-1]
+        
     for line in lines:
         parts = line.strip().split()
         node = int(parts[0])
@@ -32,5 +35,5 @@ def plot_coordinates(file_path):
     plt.show()
 
 
-file_path = './tsp_decoded/euclid_2d/a280.tsp.txt'
+file_path = '/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt'
 plot_coordinates(file_path)
