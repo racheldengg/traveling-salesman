@@ -56,3 +56,84 @@ def nearest_neighbor(x_coordinates, y_coordinates):
     print(f"Elapsed time: {elapsed_time:.6f} seconds")
     print(f"Total distance: {total_distance}")
     return tour, distance, total_number_cities, average_distance_btw_points
+
+
+
+# using Prim's algorithm for mst heuristic
+
+
+def euclidean_distance(x1, y1, x2, y2):
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+def prim_mst(vertices_x, vertices_y):
+    num_vertices = len(vertices_x)
+    mst = [None] * num_vertices
+    mst[0] = 0  # Start the MST with vertex 0
+    selected = [False] * num_vertices
+    selected[0] = True
+    edges = []
+
+    for i in range(1, num_vertices):
+        edges.append((0, i, euclidean_distance(vertices_x[0], vertices_y[0], vertices_x[i], vertices_y[i])))
+
+    mst_edges = []
+
+    while len(edges) > 0:
+        edges.sort(key=lambda edge: edge[2])
+        while True:
+            u, v, weight = edges.pop(0)
+            if selected[v] is False:
+                break
+
+        mst[v] = u
+        selected[v] = True
+        mst_edges.append((u, v, weight))
+        print(f"Length of MST: {len(mst_edges)}")
+
+        edges.clear()  # Clear the edges array before adding new edges
+
+        for i in range(num_vertices):
+            if selected[i] is False:
+                edges.append((v, i, euclidean_distance(vertices_x[v], vertices_y[v], vertices_x[i], vertices_y[i])))
+
+    return mst_edges
+    
+
+def dfs_preorder(mst_edges, start_vertex=0):
+    num_vertices = max(max(u, v) for u, v, _ in mst_edges) + 1
+    graph = [[] for _ in range(num_vertices)]
+    length = 0
+
+    for u, v, weight in mst_edges:
+        graph[u].append((v, weight))
+        graph[v].append((u, weight))
+
+    stack = [(start_vertex, None, None)]  # (vertex, parent, edge_weight)
+    visited = set()
+    preorder_edges = []
+
+    while stack:
+        vertex, parent, edge_weight = stack.pop()
+        if vertex not in visited:
+            visited.add(vertex)
+            if parent is not None:
+                preorder_edges.append((parent, vertex, edge_weight))
+                length += edge_weight
+            for v, weight in graph[vertex]:
+                stack.append((v, vertex, weight))
+
+    return preorder_edges, length
+
+def prims_mst_create_tsp_tour(vertices_x, vertices_y):
+    start_time = time.time()
+    mst = prim_mst(vertices_x, vertices_y)
+    print("MST found")
+    preorder_tour, length = dfs_preorder(mst, 0)
+    last_vertex = preorder_tour[-1][1]
+    last_to_first_distance = euclidean_distance(vertices_x[0], vertices_y[0], vertices_x[last_vertex], vertices_y[last_vertex])
+    preorder_tour.append((last_vertex, 0, last_to_first_distance))
+    end_time = time.time()
+    length += last_to_first_distance
+    print(f"Total length of tour: {length}")
+    print(f"Total time taken for algorithm: {end_time-start_time}")
+    return

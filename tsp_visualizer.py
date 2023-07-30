@@ -1,6 +1,6 @@
 from asyncio import gather
 import matplotlib.pyplot as plt
-from tsp_algorithms.euclid_2d import nearest_neighbor
+from tsp_algorithms.euclid_2d import nearest_neighbor, prims_mst_create_tsp_tour
 
 def plot_coordinates(file_path):
     x_values = []
@@ -35,5 +35,5 @@ def plot_coordinates(file_path):
     plt.show()
 
 
-file_path = '/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt'
+file_path = '/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/a280.tsp.txt'
 plot_coordinates(file_path)
