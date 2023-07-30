@@ -27,9 +27,14 @@ def parse_data(file_path):
         y_values.append(y)
         node_labels.append(str(node))
     # optimal_distance = prims_mst_create_tsp_tour(x_values, y_values)
-    optimal_distance = nearest_neighbor(x_values, y_values)
+    # optimal_distance = nearest_neighbor(x_values, y_values)
+    optimal_distance = kruskal_mst_create_tsp_tour(x_values, y_values)
     return optimal_distance
 
 ## test run held_karp
-# parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt')
-parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/a280.tsp.txt')
+parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt')
+# parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/a280.tsp.txt')
+
+# kruskal_mst_create_tsp_tour
+# Total length of tour: 797562.3212599959
+# Total time taken for algorithm: 106.60002422332764

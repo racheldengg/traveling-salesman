@@ -2,11 +2,13 @@ import random
 import numpy as np
 import math
 import time
+import heapq
 import sys
 import itertools
 
+# get data for: total distance, number of cities, how spread out the cities are from each other, how spread out the clusters are from each other, number of clusters
+
 # trying to implement nearest neighbor
-# takes in arrays of respective x and y coordinates
 def nearest_neighbor(x_coordinates, y_coordinates):
     start_time = time.time()
     visited = []
@@ -22,7 +24,7 @@ def nearest_neighbor(x_coordinates, y_coordinates):
     # get the tour and distance
     unvisited_cities = all_cities - set(visited)
     total_distance = 0
-    while len(unvisited_cities) > 0: # while the number of unvisited cities is not 0
+    while len(unvisited_cities) > 0:
         current_city = tour[-1]
         min_distance = np.inf
         nearest_city = None
@@ -37,25 +39,13 @@ def nearest_neighbor(x_coordinates, y_coordinates):
         total_distance += min_distance
         unvisited_cities = all_cities - set(visited)
         print(f"Number of unvisited cities left: {len(unvisited_cities)}")
-    # i have total distance, tour, average distance of each cluster, number of cities
-    # get data for: total distance, number of cities, how spread out the cities are from each other, how spread out the clusters are from each other, number of clusters
 
-    # get average distance between each point
-    sum_distances = 0
-    for i in range(total_number_cities):
-        x1, y1 = x_coordinates[i], y_coordinates[i]
-
-        for j in range(i + 1, total_number_cities):
-            x2, y2 = x_coordinates[j], y_coordinates[j]
-            distance = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-            sum_distances += distance
     
-    average_distance_btw_points = sum_distances / (total_number_cities * (total_number_cities - 1) / 2)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.6f} seconds")
     print(f"Total distance: {total_distance}")
-    return tour, distance, total_number_cities, average_distance_btw_points
+    return tour, distance, elapsed_time
 
 
 
@@ -137,3 +127,66 @@ def prims_mst_create_tsp_tour(vertices_x, vertices_y):
     print(f"Total length of tour: {length}")
     print(f"Total time taken for algorithm: {end_time-start_time}")
     return
+
+# using Kruskal's algorithm for mst heuristic
+def find(parent, i):
+    if parent[i] == i:
+        return i
+    return find(parent, parent[i])
+
+def union(parent, rank, x, y):
+    root_x = find(parent, x)
+    root_y = find(parent, y)
+
+    if rank[root_x] < rank[root_y]:
+        parent[root_x] = root_y
+    elif rank[root_x] > rank[root_y]:
+        parent[root_y] = root_x
+    else:
+        parent[root_y] = root_x
+        rank[root_x] += 1
+
+def kruskal_mst(vertices_x, vertices_y):
+    num_vertices = len(vertices_x)
+    mst_edges = []
+
+    parent = [i for i in range(num_vertices)]
+    rank = [0] * num_vertices
+
+    print("Running Kruskal's algorithm...")
+
+    # Create an adjacency matrix to store edge weights
+    adj_matrix = [[0 for _ in range(num_vertices)] for _ in range(num_vertices)]
+
+    for i in range(num_vertices):
+        for j in range(i + 1, num_vertices):
+            weight = euclidean_distance(vertices_x[i], vertices_y[i], vertices_x[j], vertices_y[j])
+            print(f"Added edge {i}, {j} with weight {weight} to the adjacency matrix")
+            adj_matrix[i][j] = weight
+            adj_matrix[j][i] = weight
+
+    # Flatten the adjacency matrix into a list of tuples (weight, u, v)
+    edges = []
+    for i in range(num_vertices):
+        for j in range(i + 1, num_vertices):
+            edges.append((adj_matrix[i][j], i, j))
+
+    # Sort the edges based on their weights in ascending order
+    edges.sort()
+
+    for edge in edges:
+        weight, u, v = edge
+        if find(parent, u) != find(parent, v):
+            mst_edges.append((u, v, weight))
+            union(parent, rank, u, v)
+            print(f"Added edge: ({u}, {v}) with weight {weight}")
+
+    print("Kruskal's algorithm completed.")
+    return mst_edges
+
+def kruskal_mst_create_tsp_tour(vertices_x, vertices_y):
+    start_time = time.time()
+    mst = kruskal_mst(vertices_x, vertices_y)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed Time: {elapsed_time}")
