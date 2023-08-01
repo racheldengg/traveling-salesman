@@ -156,25 +156,49 @@ def kruskal_mst(vertices_x, vertices_y):
     print("Running Kruskal's algorithm...")
 
     # Create an adjacency matrix to store edge weights
-    adj_matrix = [[0 for _ in range(num_vertices)] for _ in range(num_vertices)]
+    adj_matrix = np.zeros((num_vertices, num_vertices))
+    vert_x = np.array(vertices_x)
+    vert_y = np.array(vertices_y)
 
-    for i in range(num_vertices):
-        for j in range(i + 1, num_vertices):
-            weight = euclidean_distance(vertices_x[i], vertices_y[i], vertices_x[j], vertices_y[j])
-            print(f"Added edge {i}, {j} with weight {weight} to the adjacency matrix")
-            adj_matrix[i][j] = weight
-            adj_matrix[j][i] = weight
+    x_mat = np.tile(np.array([vert_x]).transpose(), (1, num_vertices))
+    y_mat = np.tile(np.array([vert_y]).transpose(), (1, num_vertices))
+
+    x_mat_t = x_mat.transpose()
+    y_mat_t = y_mat.transpose()
+
+    adj_matrix = np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
+    x_ind_mat = np.tile(np.array([np.arange(0, num_vertices, step=1)]).transpose(), (1, num_vertices))
+    y_ind_mat = np.tile(np.arange(0, num_vertices, step=1), (num_vertices, 1))
+    
+    import numpy.lib.recfunctions as rfn
+
+    x_mat = None 
+    y_mat = None 
+    x_mat_t = None
+    y_mat_t = None 
+    vert_x = None 
+    vert_y = None
+
+    print('merging sloth')
+    flattened = rfn.merge_arrays([adj_matrix, x_ind_mat, y_ind_mat])
 
     # Flatten the adjacency matrix into a list of tuples (weight, u, v)
-    edges = []
-    for i in range(num_vertices):
-        for j in range(i + 1, num_vertices):
-            edges.append((adj_matrix[i][j], i, j))
+    # edges = []
+    # for i in range(num_vertices):
+    #     for j in range(i + 1, num_vertices):
+    #         edges.append((adj_matrix[i][j], i, j))
 
     # Sort the edges based on their weights in ascending order
-    edges.sort()
+    # edges.sort()
 
-    for edge in edges:
+    print(flattened.shape)
+    return
+    print('sloth got flattened')
+    flattened.sort()
+    print('sloth got sorted')
+
+    for i in range(len(flattened)):
+        edge = (flattened[i], i % num_vertices, (i % num_vertices) * num_vertices)
         weight, u, v = edge
         if find(parent, u) != find(parent, v):
             mst_edges.append((u, v, weight))
