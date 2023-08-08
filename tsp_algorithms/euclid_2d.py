@@ -47,13 +47,115 @@ def nearest_neighbor(x_coordinates, y_coordinates):
     print(f"Total distance: {total_distance}")
     return tour, distance, elapsed_time
 
+# nearest insertion
+def tour_length(vertices_x, vertices_y, tour):
+    total_length = 0
+    for i in range(len(tour) - 1):
+        total_length += euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]],
+                                           vertices_x[tour[i]], vertices_y[tour[i+1]])
+        print(f"Total Length: {vertices_x[tour[i]]}, {vertices_y[tour[i]]}, {vertices_x[tour[i]]}, {vertices_y[tour[i+1]]}, {euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]], vertices_x[tour[i]], vertices_y[tour[i+1]])}, {total_length}")
+    
 
+    total_length += euclidean_distance(vertices_x[tour[-1]], vertices_y[tour[-1]],
+                                       vertices_x[tour[0]], vertices_y[tour[0]])
+    print(f"Total Length: {total_length}")
+    return total_length
+
+def nearest_insertion_tsp(vertices_x, vertices_y):
+    num_vertices = len(vertices_x)
+    unvisited = set(range(num_vertices))
+    
+    # Initialize the tour with the first two cities
+    tour = np.array([0, 1])
+    unvisited.discard(0)
+    unvisited.discard(1)
+
+    while unvisited:
+        min_increase = np.inf
+        best_insertion = None
+        
+        for new_vertex in unvisited:
+            min_distance = np.inf
+            best_edge = None
+            
+            for i in range(len(tour)):
+                distance = euclidean_distance(vertices_x[new_vertex], vertices_y[new_vertex],
+                                              vertices_x[tour[i]], vertices_y[tour[i]])
+                if distance < min_distance:
+                    min_distance = distance
+                    best_edge = i
+            
+            # Calculate the increase in tour length
+            increase = min_distance + euclidean_distance(vertices_x[new_vertex], vertices_y[new_vertex],
+                                                          vertices_x[tour[(best_edge+1) % len(tour)]],
+                                                          vertices_y[tour[(best_edge+1) % len(tour)]])
+            
+            if increase < min_increase:
+                min_increase = increase
+                best_insertion = (best_edge + 1) % len(tour), new_vertex
+        
+        # Insert the new vertex into the tour using array slicing
+        tour = np.insert(tour, best_insertion[0], best_insertion[1])
+        print(f"Length of tour: {len(tour)}")
+        unvisited.discard(best_insertion[1])
+
+    tour_len = tour_length(vertices_x, vertices_y, tour)
+    return tour, tour_len
+
+# farthest insertion
+def farthest_insertion_tsp(vertices_x, vertices_y):
+    num_vertices = len(vertices_x)
+    unvisited = set(range(num_vertices))
+    
+    # Find the two cities that are farthest apart
+    max_distance = -np.inf
+    city1, city2 = None, None
+    for i in range(num_vertices):
+        for j in range(i + 1, num_vertices):
+            distance = euclidean_distance(vertices_x[i], vertices_y[i], vertices_x[j], vertices_y[j])
+            if distance > max_distance:
+                max_distance = distance
+                city1, city2 = i, j
+    
+    # Initialize the tour with the two farthest cities
+    tour = [city1, city2]
+    unvisited.discard(city1)
+    unvisited.discard(city2)
+
+    while unvisited:
+        farthest_vertex = max(unvisited, key=lambda v: min(euclidean_distance(vertices_x[v], vertices_y[v],
+                                                                              vertices_x[t], vertices_y[t])
+                                                            for t in tour))
+        
+        # Find the edge in the tour where inserting the farthest vertex results in the smallest increase
+        min_increase = np.inf
+        best_edge = None
+        
+        for i in range(len(tour)):
+            increase = euclidean_distance(vertices_x[farthest_vertex], vertices_y[farthest_vertex],
+                                          vertices_x[tour[i]], vertices_y[tour[i]]) + \
+                       euclidean_distance(vertices_x[farthest_vertex], vertices_y[farthest_vertex],
+                                          vertices_x[tour[(i+1) % len(tour)]], vertices_y[tour[(i+1) % len(tour)]]) - \
+                       euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]],
+                                          vertices_x[tour[(i+1) % len(tour)]], vertices_y[tour[(i+1) % len(tour)]])
+            
+            if increase < min_increase:
+                min_increase = increase
+                best_edge = i
+        
+        # Insert the farthest vertex into the tour
+        insert_position = (best_edge + 1) % len(tour)
+        tour.insert(insert_position, farthest_vertex)
+        unvisited.discard(farthest_vertex)
+
+    print(tour)
+    tour_len = tour_length(vertices_x, vertices_y, tour)
+    
+    return tour, tour_len
 
 # using Prim's algorithm for mst heuristic
-
-
 def euclidean_distance(x1, y1, x2, y2):
-    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
 def prim_mst(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
@@ -65,6 +167,7 @@ def prim_mst(vertices_x, vertices_y):
 
     for i in range(1, num_vertices):
         edges.append((0, i, euclidean_distance(vertices_x[0], vertices_y[0], vertices_x[i], vertices_y[i])))
+        print(f"Number of edges added to edge list: {len(edges)}")
 
     mst_edges = []
 
@@ -179,27 +282,45 @@ def kruskal_mst(vertices_x, vertices_y):
     vert_x = None 
     vert_y = None
 
+    a_f = adj_matrix.flatten()
+    x_f = x_ind_mat.flatten()
+    y_f = y_ind_mat.flatten()
+    
+    adj_matrix = None 
+    x_ind_mat = None 
+    y_ind_mat = None 
+    
     print('merging sloth')
-    flattened = rfn.merge_arrays([adj_matrix, x_ind_mat, y_ind_mat])
 
-    # Flatten the adjacency matrix into a list of tuples (weight, u, v)
-    # edges = []
-    # for i in range(num_vertices):
-    #     for j in range(i + 1, num_vertices):
-    #         edges.append((adj_matrix[i][j], i, j))
+    flattened = np.zeros(num_vertices ** 2, dtype={
+        'names': ('dist', 'u', 'v'),
+        'formats': ('f8', 'i8', 'i8')
+    })
+    
+    flattened['dist'] = a_f
+    flattened['u'] = x_f
+    flattened['v'] = y_f
 
-    # Sort the edges based on their weights in ascending order
-    # edges.sort()
-
-    print(flattened.shape)
-    return
+    np.save('sloth.npz', flattened)
     print('sloth got flattened')
-    flattened.sort()
+    flattened.sort(order='dist')
     print('sloth got sorted')
+    
+    np.save('sloth2.npy', flattened)
 
+    print('loading')
+    # flattened = np.load('sloth2.npy')
+    print('loaded', len(flattened), num_vertices ** 2)
+
+    total = num_vertices ** 2
+    
     for i in range(len(flattened)):
-        edge = (flattened[i], i % num_vertices, (i % num_vertices) * num_vertices)
-        weight, u, v = edge
+        if i % 10000 == 0:
+            print((i / total) * 100, '% ', len(mst_edges))
+        edge = flattened[i]
+        weight = edge['dist']
+        u = edge['u']
+        v = edge['v']
         if find(parent, u) != find(parent, v):
             mst_edges.append((u, v, weight))
             union(parent, rank, u, v)
