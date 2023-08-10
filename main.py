@@ -28,8 +28,8 @@ def parse_data(file_path):
         node_labels.append(str(node))
     # optimal_distance = prims_mst_create_tsp_tour(x_values, y_values)
     # optimal_distance = nearest_insertion_tsp(x_values, y_values)
-    optimal_distance = farthest_insertion_tsp(x_values, y_values)
-    # optimal_distance = nearest_neighbor(x_values, y_values)
+    # optimal_distance = farthest_insertion_tsp(x_values, y_values)
+    optimal_distance = nearest_neighbor(x_values, y_values)
     # optimal_distance = kruskal_mst_create_tsp_tour(x_values, y_values)
     return optimal_distance
 

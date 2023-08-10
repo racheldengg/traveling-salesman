@@ -7,10 +7,27 @@ import sys
 import itertools
 
 # get data for: total distance, number of cities, how spread out the cities are from each other, how spread out the clusters are from each other, number of clusters
+def euclidean_distance(x1, y1, x2, y2):
+    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+# get tour length for nearest and farthest insertion
+def tour_length(vertices_x, vertices_y, tour):
+    total_length = 0
+    for i in range(len(tour)-1):
+        # print(i)
+        total_length += euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]],
+                                           vertices_x[tour[i+1]], vertices_y[tour[i+1]])
+        # print(f"Total Length: {vertices_x[tour[i]]}, {vertices_y[tour[i]]}, {vertices_x[tour[i]]}, {vertices_y[tour[i+1]]}, {euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]], vertices_x[tour[i]], vertices_y[tour[i+1]])}, {total_length}")
+    
+
+    total_length += euclidean_distance(vertices_x[tour[-1]], vertices_y[tour[-1]],
+                                       vertices_x[tour[0]], vertices_y[tour[0]])
+    print(f"Total Length: {total_length}")
+    return total_length
 
 # trying to implement nearest neighbor
 def nearest_neighbor(x_coordinates, y_coordinates):
-    start_time = time.time()
+    # start_time = time.time()
     visited = []
     tour = []
     total_number_cities = len(x_coordinates)
@@ -40,27 +57,11 @@ def nearest_neighbor(x_coordinates, y_coordinates):
         unvisited_cities = all_cities - set(visited)
         print(f"Number of unvisited cities left: {len(unvisited_cities)}")
 
-    
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Elapsed time: {elapsed_time:.6f} seconds")
-    print(f"Total distance: {total_distance}")
-    return tour, distance, elapsed_time
+    length = tour_length(x_coordinates, y_coordinates, tour)
+    print(length)
+    return length
 
 # nearest insertion
-def tour_length(vertices_x, vertices_y, tour):
-    total_length = 0
-    for i in range(len(tour) - 1):
-        total_length += euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]],
-                                           vertices_x[tour[i]], vertices_y[tour[i+1]])
-        print(f"Total Length: {vertices_x[tour[i]]}, {vertices_y[tour[i]]}, {vertices_x[tour[i]]}, {vertices_y[tour[i+1]]}, {euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]], vertices_x[tour[i]], vertices_y[tour[i+1]])}, {total_length}")
-    
-
-    total_length += euclidean_distance(vertices_x[tour[-1]], vertices_y[tour[-1]],
-                                       vertices_x[tour[0]], vertices_y[tour[0]])
-    print(f"Total Length: {total_length}")
-    return total_length
-
 def nearest_insertion_tsp(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
@@ -110,6 +111,22 @@ def farthest_insertion_tsp(vertices_x, vertices_y):
     # Find the two cities that are farthest apart
     max_distance = -np.inf
     city1, city2 = None, None
+    print('finding two farthest cities...')
+
+    vert_x = np.array(vertices_x)
+    vert_y = np.array(vertices_y)
+
+    x_mat = np.tile(np.array([vert_x]).transpose(), (1, num_vertices))
+    y_mat = np.tile(np.array([vert_y]).transpose(), (1, num_vertices))
+
+    x_mat_t = x_mat.transpose()
+    y_mat_t = y_mat.transpose()
+
+    dist_matrix = np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
+
+    max_index = np.unravel_index(np.argmax(dist_matrix), dist_matrix.shape)
+
+
     for i in range(num_vertices):
         for j in range(i + 1, num_vertices):
             distance = euclidean_distance(vertices_x[i], vertices_y[i], vertices_x[j], vertices_y[j])
@@ -117,11 +134,12 @@ def farthest_insertion_tsp(vertices_x, vertices_y):
                 max_distance = distance
                 city1, city2 = i, j
     
-    # Initialize the tour with the two farthest cities
-    tour = [city1, city2]
+    tour = np.array([city1, city2], dtype=np.int32)
+    print(f"found two farthest cities, {city1} and {city2}")
     unvisited.discard(city1)
     unvisited.discard(city2)
 
+    k = 0
     while unvisited:
         farthest_vertex = max(unvisited, key=lambda v: min(euclidean_distance(vertices_x[v], vertices_y[v],
                                                                               vertices_x[t], vertices_y[t])
@@ -145,7 +163,10 @@ def farthest_insertion_tsp(vertices_x, vertices_y):
         
         # Insert the farthest vertex into the tour
         insert_position = (best_edge + 1) % len(tour)
-        tour.insert(insert_position, farthest_vertex)
+        tour = np.insert(tour, insert_position, farthest_vertex)
+
+        k += 1
+        print(f"Inserted vertex {farthest_vertex}", k, len(tour))
         unvisited.discard(farthest_vertex)
 
     print(tour)
@@ -153,10 +174,34 @@ def farthest_insertion_tsp(vertices_x, vertices_y):
     
     return tour, tour_len
 
-# using Prim's algorithm for mst heuristic
-def euclidean_distance(x1, y1, x2, y2):
-    return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
+def dfs_preorder(mst_edges, start_vertex):
+    num_vertices = max(max(u, v) for u, v, _ in mst_edges) + 1
+    graph = [[] for _ in range(num_vertices)]
+
+    for u, v, weight in mst_edges:
+        graph[u].append((v, weight))
+        graph[v].append((u, weight))
+
+    stack = [(start_vertex, None, None)]  # (vertex, parent, edge_weight)
+    visited = set()
+    preorder_edges = []
+
+    while stack:
+        vertex, parent, edge_weight = stack.pop()
+        if vertex not in visited:
+            visited.add(vertex)
+            if parent is not None:
+                preorder_edges.append((parent, vertex, edge_weight))
+            for v, weight in graph[vertex]:
+                stack.append((v, vertex, weight))
+
+    ordered_vertices = []
+    for edge in preorder_edges:
+        ordered_vertices.append(edge[0])
+    return ordered_vertices
+
+# using Prim's algorithm for mst heuristic
 def prim_mst(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
     mst = [None] * num_vertices
@@ -188,48 +233,20 @@ def prim_mst(vertices_x, vertices_y):
         for i in range(num_vertices):
             if selected[i] is False:
                 edges.append((v, i, euclidean_distance(vertices_x[v], vertices_y[v], vertices_x[i], vertices_y[i])))
-
     return mst_edges
     
-
-def dfs_preorder(mst_edges, start_vertex=0):
-    num_vertices = max(max(u, v) for u, v, _ in mst_edges) + 1
-    graph = [[] for _ in range(num_vertices)]
-    length = 0
-
-    for u, v, weight in mst_edges:
-        graph[u].append((v, weight))
-        graph[v].append((u, weight))
-
-    stack = [(start_vertex, None, None)]  # (vertex, parent, edge_weight)
-    visited = set()
-    preorder_edges = []
-
-    while stack:
-        vertex, parent, edge_weight = stack.pop()
-        if vertex not in visited:
-            visited.add(vertex)
-            if parent is not None:
-                preorder_edges.append((parent, vertex, edge_weight))
-                length += edge_weight
-            for v, weight in graph[vertex]:
-                stack.append((v, vertex, weight))
-
-    return preorder_edges, length
-
 def prims_mst_create_tsp_tour(vertices_x, vertices_y):
-    start_time = time.time()
+    # start_time = time.time()
     mst = prim_mst(vertices_x, vertices_y)
     print("MST found")
-    preorder_tour, length = dfs_preorder(mst, 0)
-    last_vertex = preorder_tour[-1][1]
-    last_to_first_distance = euclidean_distance(vertices_x[0], vertices_y[0], vertices_x[last_vertex], vertices_y[last_vertex])
-    preorder_tour.append((last_vertex, 0, last_to_first_distance))
-    end_time = time.time()
-    length += last_to_first_distance
-    print(f"Total length of tour: {length}")
-    print(f"Total time taken for algorithm: {end_time-start_time}")
-    return
+    starting_index = random.randint(0, len(vertices_x)-1)
+    print(f"starting index is: {starting_index}")
+    ordered_vertices = dfs_preorder(mst, starting_index)
+    # end_time = time.time()
+    length = tour_length(vertices_x, vertices_y, ordered_vertices)
+    # print(f"Total length of tour: {length}")
+    # print(f"Total time taken for algorithm: {end_time-start_time}")
+    return length
 
 # using Kruskal's algorithm for mst heuristic
 def find(parent, i):
@@ -290,7 +307,7 @@ def kruskal_mst(vertices_x, vertices_y):
     x_ind_mat = None 
     y_ind_mat = None 
     
-    print('merging sloth')
+    # print('merging sloth')
 
     flattened = np.zeros(num_vertices ** 2, dtype={
         'names': ('dist', 'u', 'v'),
@@ -301,16 +318,16 @@ def kruskal_mst(vertices_x, vertices_y):
     flattened['u'] = x_f
     flattened['v'] = y_f
 
-    np.save('sloth.npz', flattened)
-    print('sloth got flattened')
+    # np.save('sloth.npz', flattened)
+    # print('sloth got flattened')
     flattened.sort(order='dist')
-    print('sloth got sorted')
+    # print('sloth got sorted')
     
-    np.save('sloth2.npy', flattened)
+    # np.save('sloth2.npy', flattened)
 
-    print('loading')
+    # print('loading')
     # flattened = np.load('sloth2.npy')
-    print('loaded', len(flattened), num_vertices ** 2)
+    # print('loaded', len(flattened), num_vertices ** 2)
 
     total = num_vertices ** 2
     
@@ -330,8 +347,13 @@ def kruskal_mst(vertices_x, vertices_y):
     return mst_edges
 
 def kruskal_mst_create_tsp_tour(vertices_x, vertices_y):
-    start_time = time.time()
+    # start_time = time.time()
     mst = kruskal_mst(vertices_x, vertices_y)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Elapsed Time: {elapsed_time}")
+    starting_index = random.randint(0, len(vertices_x)-1)
+    preordered_vertices = dfs_preorder(mst, starting_index)
+    length = tour_length(vertices_x, vertices_y, preordered_vertices)
+    # print(preordered_vertices)
+    # end_time = time.time()
+    # elapsed_time = end_time - start_time
+    # print(f"Elapsed Time: {elapsed_time}")
+    return length
