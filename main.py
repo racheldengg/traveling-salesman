@@ -56,7 +56,6 @@ def parse_matrix_data(file_path):
         with open(file_path, 'r') as file:
             for line in file:
                 line = line.strip()
-
                 if line == start_flag:
                     reading_data = True
                 elif line in end_flags:
@@ -64,20 +63,16 @@ def parse_matrix_data(file_path):
                 elif reading_data:
                     data.append(list(map(int, line.split())))
 
-        # Determine the size of the square matrix
-        num_cities = len(data)
+        num_cities = len(data) # Determine the size of the square matrix
         matrix_size = (num_cities, num_cities)
 
-        # Create an empty matrix with zeros
-        adjacency_matrix = np.zeros(matrix_size, dtype=int)
+        adjacency_matrix = np.zeros(matrix_size, dtype=int)  # Create an empty matrix with zeros
 
-        # Fill the upper diagonal of the matrix
-        for i in range(num_cities):
+        for i in range(num_cities): # Fill the upper diagonal of the matrix
             for j in range(i, num_cities):
                 adjacency_matrix[i, j] = data[i][j - i]  # Adjust the column index
 
-        # Copy values to the lower triangle to make the matrix symmetric
-        adjacency_matrix += adjacency_matrix.T
+        adjacency_matrix += adjacency_matrix.T # Copy values to the lower triangle to make the matrix symmetric
 
         print(adjacency_matrix) # Print the adjacency matrix
         return adjacency_matrix
@@ -136,18 +131,22 @@ def parse_coordinate_data(file_path, x_values, y_values, node_labels):
         node_labels.append(str(node))
     return
 
-def gather_data(approx_algorithm, vertices_x, vertices_y, tour_len_strategy):
+def gather_coordinate_data(approx_algorithm, vertices_x, vertices_y, tour_len_strategy):
     mst = approx_algorithm(vertices_x, vertices_y)
     length_of_tour = tour_length(vertices_x, vertices_y, mst, tour_len_strategy)
     print(length_of_tour)
     return length_of_tour
 
-def parse_data(file_path, coordinate_or_matrix):
-    x_values = []
-    y_values = []
-    node_labels = []
-    parse_coordinate_data(file_path, x_values, y_values, node_labels)
-    optimal_distance = gather_data(prim_mst, x_values, y_values, euclidean_distance)
+def main(file_path):
+    folder_name = file_path.split('/')[-2]
+    if folder_name == 'full_matrix' or folder_name == 'lower_diagonal_matrix' or folder_name == 'upper_diag_row' or folder_name == 'upper_row_matrix':
+        adjacency_matrix = parse_matrix_data(file_path)
+    else:
+        x_values = []
+        y_values = []
+        node_labels = []
+        parse_coordinate_data(file_path, x_values, y_values, node_labels)
+        optimal_distance = gather_coordinate_data(prim_mst, x_values, y_values, euclidean_distance)
     # optimal_distance = prims_mst_create_tsp_tour(x_values, y_values)
     # optimal_distance = nearest_insertion_tsp(x_values, y_values)
     # optimal_distance = farthest_insertion_tsp(x_values, y_values)
@@ -155,10 +154,9 @@ def parse_data(file_path, coordinate_or_matrix):
     # optimal_distance = kruskal_mst_create_tsp_tour(x_values, y_values)
     return optimal_distance
 
-## test run held_karp
+
 # parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt')
 # parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/a280.tsp.txt')
-
 parse_matrix_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix/bayg29.tsp.txt')
 
 
