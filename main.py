@@ -1,6 +1,7 @@
 from asyncio import gather
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from tsp_algorithms.coordinate_data import *
+from tsp_algorithms.matrix_data import *
 import os
 
 
@@ -49,7 +50,7 @@ def parse_matrix_data(file_path):
         
         adjacency_matrix += adjacency_matrix.T # Copy values to the upper triangle to make the matrix symmetric
 
-        print(adjacency_matrix) # Print the adjacency matrix
+        # print(adjacency_matrix) # Print the adjacency matrix
         return adjacency_matrix
     
     elif folder_name == 'upper_diag_row':
@@ -74,7 +75,7 @@ def parse_matrix_data(file_path):
 
         adjacency_matrix += adjacency_matrix.T # Copy values to the lower triangle to make the matrix symmetric
 
-        print(adjacency_matrix) # Print the adjacency matrix
+        # print(adjacency_matrix) # Print the adjacency matrix
         return adjacency_matrix
 
     else:
@@ -88,7 +89,7 @@ def parse_matrix_data(file_path):
                     reading_data = False
                 elif reading_data:
                     line = list(map(int, line.split()))
-                    print([0] + line)
+                    # print([0] + line)
                     data.append([0]+ line)
         data = data + [[0]]
         num_cities = len(data) # Determine the size of the square matrix
@@ -105,9 +106,12 @@ def parse_matrix_data(file_path):
         
         adjacency_matrix += adjacency_matrix.T # Copy values to the lower triangle to make the matrix symmetric
 
-        print(adjacency_matrix) # Print the adjacency matrix
+        # print(adjacency_matrix) # Print the adjacency matrix
         return adjacency_matrix
 
+def gather_matrix_data(approx_algorithm, adjacency_matrix): # don't need tour_length_strategy because 
+    list_of_vertices = approx_algorithm(adjacency_matrix)
+    return list_of_vertices
 
 
 # currently implemented tour length strategies: euclidean_distance, ceil2D_distance
@@ -157,8 +161,11 @@ def main(file_path):
 
 # parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt')
 # parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/a280.tsp.txt')
-parse_matrix_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix/bayg29.tsp.txt')
-
+adjacency_matrix = parse_matrix_data('/Users/racheldeng/Desktop/traveling salesman/tsp_decoded/upper_row_matrix/bayg29.tsp.txt')
+ordered_vertices = gather_matrix_data(kruskal_dfs_matrix, adjacency_matrix)
+length = tour_length_matrix(adjacency_matrix, ordered_vertices)
+print(length)
+# gather_matrix_data(nearest_neighbor_matrix, adjacency_matrix)
 
 # kruskal_mst_create_tsp_tour
 # Total length of tour: 797562.3212599959
