@@ -65,6 +65,7 @@ def find_nearest_vertex(adj_matrix, tour, visited):
 
 # nearest insertion
 def nearest_insertion_matrix(adjacency_matrix):
+    print(adjacency_matrix)
     num_vertices = len(adjacency_matrix)
     visited = [False] * num_vertices
     tour = []

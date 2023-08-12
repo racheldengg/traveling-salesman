@@ -5,7 +5,6 @@ from tsp_algorithms.matrix_data import *
 import os
 
 
-file_path = '/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix/bays29.tsp.txt'
 def parse_matrix_data(file_path): 
     folder_name = file_path.split('/')[-2]
     start_flag = 'EDGE_WEIGHT_SECTION'
@@ -17,15 +16,14 @@ def parse_matrix_data(file_path):
         with open(file_path, 'r') as file:
             for line in file:
                 line = line.strip()
-            if line == start_flag:
-                reading_data = True
-            elif line in end_flags:
-                reading_data = False
-            elif reading_data:
-                row = list(map(int, line.split()))
-                data.append(row)
+                if line == start_flag:
+                    reading_data = True
+                elif line in end_flags:
+                    reading_data = False
+                elif reading_data:
+                    row = list(map(int, line.split()))
+                    data.append(row)
         adjacency_matrix = np.array(data)
-        print(adjacency_matrix)
         return adjacency_matrix
     
     elif folder_name == 'lower_diagonal_matrix':
@@ -109,14 +107,21 @@ def parse_matrix_data(file_path):
         # print(adjacency_matrix) # Print the adjacency matrix
         return adjacency_matrix
 
-def gather_matrix_data(approx_algorithm, adjacency_matrix): # don't need tour_length_strategy because 
-    list_of_vertices = approx_algorithm(adjacency_matrix)
-    return list_of_vertices
+def get_matrix_length(tour_order, adj_matrix): # don't need tour_length_strategy because 
+    length = 0
+    num_vertices = len(tour_order)
+
+    for i in range(num_vertices - 1):
+        from_vertex = tour_order[i]
+        to_vertex = tour_order[i + 1]
+        length += adj_matrix[from_vertex][to_vertex]
+
+    # Add distance from last to first vertex to complete the tour
+    length += adj_matrix[tour_order[-1]][tour_order[0]]
+    return length
 
 
-# currently implemented tour length strategies: euclidean_distance, ceil2D_distance
 def parse_coordinate_data(file_path, x_values, y_values, node_labels):
-    file_path = '/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix/bays29.tsp.txt'
     full_matrix_directory = os.path.dirname(os.path.dirname(file_path))
     folder_name = full_matrix_directory.split('/')[-1]
 
@@ -135,37 +140,55 @@ def parse_coordinate_data(file_path, x_values, y_values, node_labels):
         node_labels.append(str(node))
     return
 
-def gather_coordinate_data(approx_algorithm, vertices_x, vertices_y, tour_len_strategy):
-    mst = approx_algorithm(vertices_x, vertices_y)
-    length_of_tour = tour_length(vertices_x, vertices_y, mst, tour_len_strategy)
+def get_coordinate_length(approx_algorithm, vertices_x, vertices_y, tour_len_strategy):
+    ordered_vertices = approx_algorithm(vertices_x, vertices_y)
+    length_of_tour = tour_length(vertices_x, vertices_y, ordered_vertices, tour_len_strategy)
     print(length_of_tour)
     return length_of_tour
 
-def main(file_path):
+def main(file_path, approx_algorithm):
     folder_name = file_path.split('/')[-2]
-    if folder_name == 'full_matrix' or folder_name == 'lower_diagonal_matrix' or folder_name == 'upper_diag_row' or folder_name == 'upper_row_matrix':
-        adjacency_matrix = parse_matrix_data(file_path)
-    else:
+    # print(folder_name)
+    if folder_name == 'euclid_2d':
         x_values = []
         y_values = []
         node_labels = []
         parse_coordinate_data(file_path, x_values, y_values, node_labels)
-        optimal_distance = gather_coordinate_data(prim_mst, x_values, y_values, euclidean_distance)
-    # optimal_distance = prims_mst_create_tsp_tour(x_values, y_values)
-    # optimal_distance = nearest_insertion_tsp(x_values, y_values)
-    # optimal_distance = farthest_insertion_tsp(x_values, y_values)
-    # optimal_distance = nearest_neighbor(x_values, y_values)
-    # optimal_distance = kruskal_mst_create_tsp_tour(x_values, y_values)
-    return optimal_distance
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, euclidean_distance)
+        return optimal_distance
+    if folder_name == 'ceil_2D':
+        x_values = []
+        y_values = []
+        node_labels = []
+        parse_coordinate_data(file_path, x_values, y_values, node_labels)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, ceil2D_distance)
+        return optimal_distance
+    if folder_name == 'att_distance':
+        x_values = []
+        y_values = []
+        node_labels = []
+        parse_coordinate_data(file_path, x_values, y_values, node_labels)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, att_distance)
+        return optimal_distance
+    if folder_name == 'geo_coordinates':
+        x_values = []
+        y_values = []
+        node_labels = []
+        parse_coordinate_data(file_path, x_values, y_values, node_labels)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, geo_distance)
+        return optimal_distance
+    if folder_name == 'full_matrix' or folder_name == 'lower_diagonal_matrix' or folder_name == 'upper_diag_row' or folder_name == 'upper_row_matrix':
+         adjacency_matrix = parse_matrix_data(file_path)
+         print('adjacency matrix')
+         print(adjacency_matrix)
+         tour_order = approx_algorithm(adjacency_matrix)
+         length = get_matrix_length(tour_order, adjacency_matrix)
+         return length
 
 
-# parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/d18512.tsp.txt')
-# parse_data('/home/rachel/Desktop/traveling-salesman/tsp_decoded/euclid_2d/a280.tsp.txt')
-adjacency_matrix = parse_matrix_data('/Users/racheldeng/Desktop/traveling salesman/tsp_decoded/upper_row_matrix/bayg29.tsp.txt')
-ordered_vertices = gather_matrix_data(kruskal_dfs_matrix, adjacency_matrix)
-length = tour_length_matrix(adjacency_matrix, ordered_vertices)
+length = main('/Users/racheldeng/Desktop/traveling salesman/tsp_decoded/full_matrix/bays29.tsp.txt', kruskal_dfs_matrix)
 print(length)
-# gather_matrix_data(nearest_neighbor_matrix, adjacency_matrix)
+
 
 # kruskal_mst_create_tsp_tour
 # Total length of tour: 797562.3212599959

@@ -47,19 +47,15 @@ def geo_distance(x1, y1, x2, y2):
 def tour_length(vertices_x, vertices_y, tour, distance_calculation):
     total_length = 0
     for i in range(len(tour)-1):
-        # print(i)
         total_length += distance_calculation(vertices_x[tour[i]], vertices_y[tour[i]],
-                                           vertices_x[tour[i+1]], vertices_y[tour[i+1]])
-        # print(f"Total Length: {vertices_x[tour[i]]}, {vertices_y[tour[i]]}, {vertices_x[tour[i]]}, {vertices_y[tour[i+1]]}, {euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]], vertices_x[tour[i]], vertices_y[tour[i+1]])}, {total_length}")
-    
+                                           vertices_x[tour[i+1]], vertices_y[tour[i+1]])    
 
     total_length += distance_calculation(vertices_x[tour[-1]], vertices_y[tour[-1]],
                                        vertices_x[tour[0]], vertices_y[tour[0]])
-    print(f"Total Length: {total_length}")
     return total_length
 
 # trying to implement nearest neighbor
-def nearest_neighbor(x_coordinates, y_coordinates):
+def nearest_neighbor_coordinates(x_coordinates, y_coordinates):
     # start_time = time.time()
     visited = []
     tour = []
@@ -88,14 +84,12 @@ def nearest_neighbor(x_coordinates, y_coordinates):
         visited.append(nearest_city)
         total_distance += min_distance
         unvisited_cities = all_cities - set(visited)
-        print(f"Number of unvisited cities left: {len(unvisited_cities)}")
 
     length = tour_length(x_coordinates, y_coordinates, tour, euclidean_distance)
-    print(length)
     return tour
 
 # nearest insertion
-def nearest_insertion_tsp(vertices_x, vertices_y):
+def nearest_insertion_coordinates(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
     
@@ -130,15 +124,13 @@ def nearest_insertion_tsp(vertices_x, vertices_y):
         
         # Insert the new vertex into the tour using array slicing
         tour = np.insert(tour, best_insertion[0], best_insertion[1])
-        print(f"Length of tour: {len(tour)}")
         unvisited.discard(best_insertion[1])
 
     tour_len = tour_length(vertices_x, vertices_y, tour, euclidean_distance)
-    print(f"Length of tour: {tour_len}")
     return tour
 
 # farthest insertion
-def farthest_insertion_tsp(vertices_x, vertices_y):
+def farthest_insertion_coordinates(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
     
@@ -237,7 +229,7 @@ def dfs_preorder(mst_edges):
     return ordered_vertices
 
 # using Prim's algorithm for mst heuristic
-def prim_mst(vertices_x, vertices_y):
+def prim_dfs_coordinates(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
     mst = [None] * num_vertices
     mst[0] = 0  # Start the MST with vertex 0
@@ -289,7 +281,7 @@ def union(parent, rank, x, y):
         parent[root_y] = root_x
         rank[root_x] += 1
 
-def kruskal_mst(vertices_x, vertices_y):
+def kruskal_dfs_coordinates(vertices_x, vertices_y):
     num_vertices = len(vertices_x)
     mst_edges = []
 
