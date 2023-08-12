@@ -20,7 +20,7 @@ data to collect:
 4. number of cities
 5. how spread out the cities are from each other (standard deviation)
 6. number of clusters
-7. how spread out the clusters are from each other
+7. how spread out the clusters are from each other (inter-cluster variance)
 8. sparsity/density
 
 end goal: determine which algorithm results in the best runtime/tour
