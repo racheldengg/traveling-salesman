@@ -1,6 +1,6 @@
 from asyncio import gather
 import matplotlib.pyplot as plt
-from tsp_algorithms.euclid_2d import nearest_neighbor, prims_mst_create_tsp_tour
+from tsp_algorithms.coordinate_data import nearest_neighbor, prims_mst_create_tsp_tour
 
 def plot_coordinates(file_path):
     x_values = []
