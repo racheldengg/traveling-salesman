@@ -5,6 +5,7 @@ import time
 import heapq
 import sys
 import itertools
+from collections import deque
 
 # distance for euclidean coordinates
 def euclidean_distance(x1, y1, x2, y2):
@@ -54,12 +55,45 @@ def tour_length(vertices_x, vertices_y, tour, distance_calculation):
                                        vertices_x[tour[0]], vertices_y[tour[0]])
     return total_length
 
+
+def euclidean_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    return np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
+
+def ceil2D_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    return np.ceil(euclidean_distance_np(x_mat, y_mat, x_mat_t, y_mat_t))
+
+def att_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    return np.ceil((1/10) * euclidean_distance(x_mat, y_mat, x_mat_t, y_mat_t))
+
+def geo_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    diff_x = np.subtract(np.radians(x_mat), np.radians(x_mat_t))
+    diff_y = np.subtract(np.radians(y_mat), np.radians(y_mat_t))
+
+    a = np.add(
+        np.square(np.sin((1/2) * diff_x)),
+        np.multiply(
+            np.cos(x_mat),
+            np.multiply(
+                np.cos(x_mat_t),
+                np.square(
+                    np.sin((1/2) * diff_y)
+                )
+            )
+        )
+    )
+
+    print(a.shape)
+    print(np.min(a))
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(np.subtract(np.ones_like(a), a)))
+    return 6731 * c
+
+
 # trying to implement nearest neighbor
-def nearest_neighbor_coordinates(x_coordinates, y_coordinates, distance_metric):
+def nearest_neighbor_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     # start_time = time.time()
     visited = []
     tour = []
-    total_number_cities = len(x_coordinates)
+    total_number_cities = len(vertices_x)
     all_cities = set(range(0, total_number_cities))
 
     # fix the starting city
@@ -76,7 +110,7 @@ def nearest_neighbor_coordinates(x_coordinates, y_coordinates, distance_metric):
         nearest_city = None
         
         for city in unvisited_cities:
-            distance = distance_metric(x_coordinates[current_city], y_coordinates[current_city], x_coordinates[city], y_coordinates[city])
+            distance = distance_metric(vertices_x[current_city], vertices_y[current_city], vertices_x[city], vertices_y[city])
             if distance < min_distance:
                 min_distance = distance
                 nearest_city = city
@@ -85,11 +119,12 @@ def nearest_neighbor_coordinates(x_coordinates, y_coordinates, distance_metric):
         total_distance += min_distance
         unvisited_cities = all_cities - set(visited)
 
-    length = tour_length(x_coordinates, y_coordinates, tour, distance_metric)
+    # length = tour_length(x_coordinates, y_coordinates, tour, distance_metric)
+    print(tour)
     return tour
 
 # nearest insertion
-def nearest_insertion_coordinates(vertices_x, vertices_y, distance_metric):
+def nearest_insertion_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
     
@@ -126,42 +161,9 @@ def nearest_insertion_coordinates(vertices_x, vertices_y, distance_metric):
         tour = np.insert(tour, best_insertion[0], best_insertion[1])
         unvisited.discard(best_insertion[1])
 
-    tour_len = tour_length(vertices_x, vertices_y, tour, distance_metric)
+    # tour_len = tour_length(vertices_x, vertices_y, tour, distance_metric)
     return tour
-
-def euclidean_np(x_mat, y_mat, x_mat_t, y_mat_t):
-    return np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
-
-def ceil2D_np(x_mat, y_mat, x_mat_t, y_mat_t):
-    return np.ceil(euclidean_np(x_mat, y_mat, x_mat_t, y_mat_t))
-
-def att_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
-    return np.ceil((1/10) * euclidean_distance(x_mat, y_mat, x_mat_t, y_mat_t))
-
-def geo_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
-    diff_x = np.subtract(np.radians(x_mat), np.radians(x_mat_t))
-    diff_y = np.subtract(np.radians(y_mat), np.radians(y_mat_t))
-
-    a = np.add(
-        np.square(np.sin((1/2) * diff_x)),
-        np.multiply(
-            np.cos(x_mat),
-            np.multiply(
-                np.cos(x_mat_t),
-                np.square(
-                    np.sin((1/2) * diff_y)
-                )
-            )
-        )
-    )
-
-    print(a.shape)
-    print(np.min(a))
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(np.subtract(np.ones_like(a), a)))
-    return 6731 * c
     
-
-
 # farthest insertion
 def farthest_insertion_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     num_vertices = len(vertices_x)
@@ -228,41 +230,36 @@ def farthest_insertion_coordinates(vertices_x, vertices_y, distance_metric, adj_
         print(f"Inserted vertex {farthest_vertex}", k, len(tour))
         unvisited.discard(farthest_vertex)
 
-    tour_len = tour_length(vertices_x, vertices_y, tour, distance_metric)
-    print(f"Length of tour: {tour_len}")
+    # tour_len = tour_length(vertices_x, vertices_y, tour, distance_metric)
+    # print(f"Length of tour: {tour_len}")
     
     return tour
+
 
 # Prim's and Kruskal's
 def dfs_preorder(mst_edges):
     start_vertex = random.randint(0, len(mst_edges))
-    num_vertices = max(max(u, v) for u, v, _ in mst_edges) + 1
-    graph = [[] for _ in range(num_vertices)]
-
-    for u, v, weight in mst_edges:
-        graph[u].append((v, weight))
-        graph[v].append((u, weight))
-
-    stack = [(start_vertex, None, None)]  # (vertex, parent, edge_weight)
     visited = set()
-    preorder_edges = []
+    result = []
+    stack = deque([start_vertex])
 
     while stack:
-        vertex, parent, edge_weight = stack.pop()
+        vertex = stack.pop()
+        
         if vertex not in visited:
+            result.append(vertex)
             visited.add(vertex)
-            if parent is not None:
-                preorder_edges.append((parent, vertex, edge_weight))
-            for v, weight in graph[vertex]:
-                stack.append((v, vertex, weight))
-
-    ordered_vertices = []
-    for edge in preorder_edges:
-        ordered_vertices.append(edge[0])
-    return ordered_vertices
+            
+            for edge in mst_edges:
+                if edge[0] == vertex and edge[1] not in visited:
+                    stack.append(edge[1])
+                elif edge[1] == vertex and edge[0] not in visited:
+                    stack.append(edge[0])
+    print(result)
+    return result
 
 # using Prim's algorithm for mst heuristic
-def prim_dfs_coordinates(vertices_x, vertices_y, distance_metric):
+def prim_dfs_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     num_vertices = len(vertices_x)
     mst = [None] * num_vertices
     mst[0] = 0  # Start the MST with vertex 0
@@ -314,7 +311,7 @@ def union(parent, rank, x, y):
         parent[root_y] = root_x
         rank[root_x] += 1
 
-def kruskal_dfs_coordinates(vertices_x, vertices_y):
+def kruskal_dfs_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     num_vertices = len(vertices_x)
     mst_edges = []
 
@@ -334,7 +331,9 @@ def kruskal_dfs_coordinates(vertices_x, vertices_y):
     x_mat_t = x_mat.transpose()
     y_mat_t = y_mat.transpose()
 
-    adj_matrix = np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
+    adj_matrix = adj_mat_dist(x_mat, y_mat, x_mat_t, y_mat_t)
+    print(adj_matrix)
+
     x_ind_mat = np.tile(np.array([np.arange(0, num_vertices, step=1)]).transpose(), (1, num_vertices))
     y_ind_mat = np.tile(np.arange(0, num_vertices, step=1), (num_vertices, 1))
     
