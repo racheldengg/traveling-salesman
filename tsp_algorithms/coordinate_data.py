@@ -55,7 +55,7 @@ def tour_length(vertices_x, vertices_y, tour, distance_calculation):
     return total_length
 
 # trying to implement nearest neighbor
-def nearest_neighbor_coordinates(x_coordinates, y_coordinates):
+def nearest_neighbor_coordinates(x_coordinates, y_coordinates, distance_metric):
     # start_time = time.time()
     visited = []
     tour = []
@@ -76,7 +76,7 @@ def nearest_neighbor_coordinates(x_coordinates, y_coordinates):
         nearest_city = None
         
         for city in unvisited_cities:
-            distance = np.sqrt((x_coordinates[current_city] - x_coordinates[city]) ** 2 + (y_coordinates[current_city] - y_coordinates[city]) ** 2)
+            distance = distance_metric(x_coordinates[current_city], y_coordinates[current_city], x_coordinates[city], y_coordinates[city])
             if distance < min_distance:
                 min_distance = distance
                 nearest_city = city
@@ -85,11 +85,11 @@ def nearest_neighbor_coordinates(x_coordinates, y_coordinates):
         total_distance += min_distance
         unvisited_cities = all_cities - set(visited)
 
-    length = tour_length(x_coordinates, y_coordinates, tour, euclidean_distance)
+    length = tour_length(x_coordinates, y_coordinates, tour, distance_metric)
     return tour
 
 # nearest insertion
-def nearest_insertion_coordinates(vertices_x, vertices_y):
+def nearest_insertion_coordinates(vertices_x, vertices_y, distance_metric):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
     
@@ -107,14 +107,14 @@ def nearest_insertion_coordinates(vertices_x, vertices_y):
             best_edge = None
             
             for i in range(len(tour)):
-                distance = euclidean_distance(vertices_x[new_vertex], vertices_y[new_vertex],
+                distance = distance_metric(vertices_x[new_vertex], vertices_y[new_vertex],
                                               vertices_x[tour[i]], vertices_y[tour[i]])
                 if distance < min_distance:
                     min_distance = distance
                     best_edge = i
             
             # Calculate the increase in tour length
-            increase = min_distance + euclidean_distance(vertices_x[new_vertex], vertices_y[new_vertex],
+            increase = min_distance + distance_metric(vertices_x[new_vertex], vertices_y[new_vertex],
                                                           vertices_x[tour[(best_edge+1) % len(tour)]],
                                                           vertices_y[tour[(best_edge+1) % len(tour)]])
             
@@ -126,11 +126,44 @@ def nearest_insertion_coordinates(vertices_x, vertices_y):
         tour = np.insert(tour, best_insertion[0], best_insertion[1])
         unvisited.discard(best_insertion[1])
 
-    tour_len = tour_length(vertices_x, vertices_y, tour, euclidean_distance)
+    tour_len = tour_length(vertices_x, vertices_y, tour, distance_metric)
     return tour
 
+def euclidean_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    return np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
+
+def ceil2D_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    return np.ceil(euclidean_np(x_mat, y_mat, x_mat_t, y_mat_t))
+
+def att_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    return np.ceil((1/10) * euclidean_distance(x_mat, y_mat, x_mat_t, y_mat_t))
+
+def geo_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
+    diff_x = np.subtract(np.radians(x_mat), np.radians(x_mat_t))
+    diff_y = np.subtract(np.radians(y_mat), np.radians(y_mat_t))
+
+    a = np.add(
+        np.square(np.sin((1/2) * diff_x)),
+        np.multiply(
+            np.cos(x_mat),
+            np.multiply(
+                np.cos(x_mat_t),
+                np.square(
+                    np.sin((1/2) * diff_y)
+                )
+            )
+        )
+    )
+
+    print(a.shape)
+    print(np.min(a))
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(np.subtract(np.ones_like(a), a)))
+    return 6731 * c
+    
+
+
 # farthest insertion
-def farthest_insertion_coordinates(vertices_x, vertices_y):
+def farthest_insertion_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
     
@@ -148,14 +181,14 @@ def farthest_insertion_coordinates(vertices_x, vertices_y):
     x_mat_t = x_mat.transpose()
     y_mat_t = y_mat.transpose()
 
-    dist_matrix = np.sqrt(np.add(np.square(np.subtract(x_mat, x_mat_t)), np.square(np.subtract(y_mat, y_mat_t))))
+    dist_matrix = adj_mat_dist(x_mat, y_mat, x_mat_t, y_mat_t)
 
     max_index = np.unravel_index(np.argmax(dist_matrix), dist_matrix.shape)
 
 
     for i in range(num_vertices):
         for j in range(i + 1, num_vertices):
-            distance = euclidean_distance(vertices_x[i], vertices_y[i], vertices_x[j], vertices_y[j])
+            distance = distance_metric(vertices_x[i], vertices_y[i], vertices_x[j], vertices_y[j])
             if distance > max_distance:
                 max_distance = distance
                 city1, city2 = i, j
@@ -167,7 +200,7 @@ def farthest_insertion_coordinates(vertices_x, vertices_y):
 
     k = 0
     while unvisited:
-        farthest_vertex = max(unvisited, key=lambda v: min(euclidean_distance(vertices_x[v], vertices_y[v],
+        farthest_vertex = max(unvisited, key=lambda v: min(distance_metric(vertices_x[v], vertices_y[v],
                                                                               vertices_x[t], vertices_y[t])
                                                             for t in tour))
         
@@ -176,11 +209,11 @@ def farthest_insertion_coordinates(vertices_x, vertices_y):
         best_edge = None
         
         for i in range(len(tour)):
-            increase = euclidean_distance(vertices_x[farthest_vertex], vertices_y[farthest_vertex],
+            increase = distance_metric(vertices_x[farthest_vertex], vertices_y[farthest_vertex],
                                           vertices_x[tour[i]], vertices_y[tour[i]]) + \
-                       euclidean_distance(vertices_x[farthest_vertex], vertices_y[farthest_vertex],
+                       distance_metric(vertices_x[farthest_vertex], vertices_y[farthest_vertex],
                                           vertices_x[tour[(i+1) % len(tour)]], vertices_y[tour[(i+1) % len(tour)]]) - \
-                       euclidean_distance(vertices_x[tour[i]], vertices_y[tour[i]],
+                       distance_metric(vertices_x[tour[i]], vertices_y[tour[i]],
                                           vertices_x[tour[(i+1) % len(tour)]], vertices_y[tour[(i+1) % len(tour)]])
             
             if increase < min_increase:
@@ -195,7 +228,7 @@ def farthest_insertion_coordinates(vertices_x, vertices_y):
         print(f"Inserted vertex {farthest_vertex}", k, len(tour))
         unvisited.discard(farthest_vertex)
 
-    tour_len = tour_length(vertices_x, vertices_y, tour, euclidean_distance)
+    tour_len = tour_length(vertices_x, vertices_y, tour, distance_metric)
     print(f"Length of tour: {tour_len}")
     
     return tour
@@ -229,7 +262,7 @@ def dfs_preorder(mst_edges):
     return ordered_vertices
 
 # using Prim's algorithm for mst heuristic
-def prim_dfs_coordinates(vertices_x, vertices_y):
+def prim_dfs_coordinates(vertices_x, vertices_y, distance_metric):
     num_vertices = len(vertices_x)
     mst = [None] * num_vertices
     mst[0] = 0  # Start the MST with vertex 0
@@ -238,7 +271,7 @@ def prim_dfs_coordinates(vertices_x, vertices_y):
     edges = []
 
     for i in range(1, num_vertices):
-        edges.append((0, i, euclidean_distance(vertices_x[0], vertices_y[0], vertices_x[i], vertices_y[i])))
+        edges.append((0, i, distance_metric(vertices_x[0], vertices_y[0], vertices_x[i], vertices_y[i])))
         print(f"Number of edges added to edge list: {len(edges)}")
 
     mst_edges = []
@@ -259,7 +292,7 @@ def prim_dfs_coordinates(vertices_x, vertices_y):
 
         for i in range(num_vertices):
             if selected[i] is False:
-                edges.append((v, i, euclidean_distance(vertices_x[v], vertices_y[v], vertices_x[i], vertices_y[i])))
+                edges.append((v, i, distance_metric(vertices_x[v], vertices_y[v], vertices_x[i], vertices_y[i])))
     preordered_mst_edges = dfs_preorder(mst_edges)
     return preordered_mst_edges
     

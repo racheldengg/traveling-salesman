@@ -128,25 +128,33 @@ def parse_coordinate_data(file_path, x_values, y_values, node_labels):
     with open(file_path, 'r') as file:
         end_file = len(file.readlines())
         file.seek(0)
-        lines = file.readlines()[6:end_file-1]
+        line = file.readline()
+        while (line != 'NODE_COORD_SECTION\n'):
+            print(line)
+            
+            line = file.readline()
         
+        lines = file.readlines()
     for line in lines:
-        parts = line.strip().split()
-        node = int(parts[0])
-        x = float(parts[1])
-        y = float(parts[2])
-        x_values.append(x)
-        y_values.append(y)
-        node_labels.append(str(node))
+        try:
+            parts = line.strip().split()
+            node = int(parts[0])
+            x = float(parts[1])
+            y = float(parts[2])
+            x_values.append(x)
+            y_values.append(y)
+            node_labels.append(str(node))
+        except:
+            pass
     return
 
-def get_coordinate_length(approx_algorithm, vertices_x, vertices_y, tour_len_strategy):
-    ordered_vertices = approx_algorithm(vertices_x, vertices_y)
+def get_coordinate_length(approx_algorithm, vertices_x, vertices_y, tour_len_strategy, distance_metric, adj_dist_metric):
+    ordered_vertices = approx_algorithm(vertices_x, vertices_y, distance_metric, adj_dist_metric)
     length_of_tour = tour_length(vertices_x, vertices_y, ordered_vertices, tour_len_strategy)
     print(length_of_tour)
     return length_of_tour
 
-def main(file_path, approx_algorithm):
+def main(file_path, approx_algorithm, distance_metric, adj_dist_metric):
     folder_name = file_path.split('/')[-2]
     # print(folder_name)
     if folder_name == 'euclid_2d':
@@ -154,28 +162,28 @@ def main(file_path, approx_algorithm):
         y_values = []
         node_labels = []
         parse_coordinate_data(file_path, x_values, y_values, node_labels)
-        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, euclidean_distance)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, euclidean_distance, distance_metric, adj_dist_metric)
         return optimal_distance
     if folder_name == 'ceil_2D':
         x_values = []
         y_values = []
         node_labels = []
         parse_coordinate_data(file_path, x_values, y_values, node_labels)
-        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, ceil2D_distance)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, ceil2D_distance, distance_metric, adj_dist_metric)
         return optimal_distance
     if folder_name == 'att_distance':
         x_values = []
         y_values = []
         node_labels = []
         parse_coordinate_data(file_path, x_values, y_values, node_labels)
-        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, att_distance)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, att_distance, distance_metric, adj_dist_metric)
         return optimal_distance
     if folder_name == 'geo_coordinates':
         x_values = []
         y_values = []
         node_labels = []
         parse_coordinate_data(file_path, x_values, y_values, node_labels)
-        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, geo_distance)
+        optimal_distance = get_coordinate_length(approx_algorithm, x_values, y_values, geo_distance, distance_metric, adj_dist_metric)
         return optimal_distance
     if folder_name == 'full_matrix' or folder_name == 'lower_diagonal_matrix' or folder_name == 'upper_diag_row' or folder_name == 'upper_row_matrix':
          adjacency_matrix = parse_matrix_data(file_path)
@@ -186,7 +194,7 @@ def main(file_path, approx_algorithm):
          return length
 
 
-length = main('/Users/racheldeng/Desktop/traveling salesman/tsp_decoded/full_matrix/bays29.tsp.txt', kruskal_dfs_matrix)
+length = main('/home/rachel/Desktop/traveling-salesman/tsp_decoded/geo_coordinates/ali535.tsp.txt', farthest_insertion_coordinates, geo_distance, geo_distance_np)
 print(length)
 
 
