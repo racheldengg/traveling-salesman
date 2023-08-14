@@ -72,19 +72,24 @@ def geo_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
     a = np.add(
         np.square(np.sin((1/2) * diff_x)),
         np.multiply(
-            np.cos(x_mat),
+            np.cos(np.radians(x_mat_t)),
             np.multiply(
-                np.cos(x_mat_t),
+                np.cos(np.radians(x_mat)),
                 np.square(
                     np.sin((1/2) * diff_y)
                 )
             )
         )
     )
+    # print(a)
 
-    print(a.shape)
-    print(np.min(a))
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(np.subtract(np.ones_like(a), a)))
+    # print(a.shape)
+    # print(np.min(a))
+    c = 2 * np.arctan2(
+        np.sqrt(a), 
+        np.sqrt
+        (np.subtract
+         (np.ones_like(a), a)))
     return 6731 * c
 
 
@@ -120,18 +125,17 @@ def nearest_neighbor_coordinates(vertices_x, vertices_y, distance_metric, adj_ma
         unvisited_cities = all_cities - set(visited)
 
     # length = tour_length(x_coordinates, y_coordinates, tour, distance_metric)
-    print(tour)
     return tour
 
 # nearest insertion
 def nearest_insertion_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     num_vertices = len(vertices_x)
     unvisited = set(range(num_vertices))
-    
+    random_numbers = random.sample(range(num_vertices), 2)
     # Initialize the tour with the first two cities
-    tour = np.array([0, 1])
-    unvisited.discard(0)
-    unvisited.discard(1)
+    tour = np.array([random_numbers[0], random_numbers[1]])
+    unvisited.discard(random_numbers[0])
+    unvisited.discard(random_numbers[1])
 
     while unvisited:
         min_increase = np.inf

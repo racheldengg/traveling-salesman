@@ -3,6 +3,11 @@ from asyncio import gather
 from tsp_algorithms.coordinate_data import *
 from tsp_algorithms.matrix_data import *
 import os
+import numpy as np
+from sklearn.cluster import SpectralClustering
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+import sqlite3
 
 def parse_matrix_data(file_path): 
     folder_name = file_path.split('/')[-2]
@@ -106,7 +111,7 @@ def parse_matrix_data(file_path):
         # print(adjacency_matrix) # Print the adjacency matrix
         return adjacency_matrix
 
-def get_matrix_length(tour_order, adj_matrix): # don't need tour_length_strategy because 
+def get_matrix_length(tour_order, adj_matrix): # don't need tour_length_strategy because
     length = 0
     num_vertices = len(tour_order)
 
@@ -114,6 +119,7 @@ def get_matrix_length(tour_order, adj_matrix): # don't need tour_length_strategy
         from_vertex = tour_order[i]
         to_vertex = tour_order[i + 1]
         length += adj_matrix[from_vertex][to_vertex]
+        print(length)
 
     # Add distance from last to first vertex to complete the tour
     length += adj_matrix[tour_order[-1]][tour_order[0]]
@@ -128,10 +134,7 @@ def parse_coordinate_data(file_path, x_values, y_values, node_labels):
         file.seek(0)
         line = file.readline()
         while (line != 'NODE_COORD_SECTION\n'):
-            print(line)
-            
             line = file.readline()
-        
         lines = file.readlines()
     for line in lines:
         try:
@@ -189,12 +192,61 @@ def main(file_path, approx_algorithm):
          print(adjacency_matrix)
          tour_order = approx_algorithm(adjacency_matrix)
          optimal_distance = get_matrix_length(tour_order, adjacency_matrix)
+         print(optimal_distance)
          return optimal_distance
 
+def insert_to_database(db_name, file_path, approx_algorithm):
+    filename = file_path.split('/')[-1]
+    length = main(file_path, approx_algorithm)
 
+    connection = sqlite3.connect(db_name)
+    cursor = connection.cursor()
+    approx_algorithm = approx_algorithm.__name__.replace("_coordinates", "")
+    print(length, filename, approx_algorithm)
+    # Create a table if it doesn't exist
+    cursor.execute('''CREATE TABLE IF NOT EXISTS graph_data (filename TEXT, approx_algorithm TEXT, length REAL)''')
+    cursor.execute('''INSERT INTO graph_data (filename, approx_algorithm, length) VALUES (?, ?, ?)''',
+                           (filename, approx_algorithm, int(length)))
+    connection.commit()
+    connection.close()
+
+def check_database_values(db_name):
+    # Connect to the SQLite database
+    connection = sqlite3.connect(db_name)
+    cursor = connection.cursor()
+
+    # Execute a SELECT query to retrieve the stored values
+    cursor.execute('''SELECT * FROM graph_data''')
+    rows = cursor.fetchall()
+
+    # Print the retrieved rows (filename and result)
+    for row in rows:
+        print(row)
+
+    # Close the connection
+    connection.close()
+
+db_name = 'tsp.db'
+folder_path = ['/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix/', 
+               '/home/rachel/Desktop/traveling-salesman/tsp_decoded/lower_diagonal_matrix/', 
+               '/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_diag_row/', 
+               '/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix/'
+               ]
+for folder in folder_path:
+    file_list = file_list = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+
+    for i in range(5):
+        for file in file_list:
+            print(file)
+            file_path = folder + file
+            insert_to_database('tsp.db', file_path, kruskal_dfs_matrix)
+        check_database_values('tsp.db')
+
+# insert_to_database(db_name, file_path, nearest_neighbor_coordinates)
+# check_database_values(db_name)
 # parameters for main: path to file, approximation algorithm, type of distance to calculate, how to get the adjacency matrix
-length = main('/Users/racheldeng/Desktop/traveling salesman/tsp_decoded/ceil_2D/dsj1000.tsp.txt', farthest_insertion_coordinates)
-print(length)
+# length = main('/home/rachel/Desktop/traveling-salesman/tsp_decoded/ceil_2D/dsj1000.tsp.txt', farthest_insertion_coordinates)
+# print(length)
 
 
 # kruskal_mst_create_tsp_tour

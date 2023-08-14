@@ -110,30 +110,40 @@ def find_farthest_vertex(adj_matrix, tour, visited):
 
 def farthest_insertion_matrix(adjacency_matrix):
     num_vertices = len(adjacency_matrix)
-    visited = [False] * num_vertices
-    tour = []
+    unvisited = list(range(num_vertices))
+    start_vertex = random.choice(unvisited)  # Start with a random vertex
+    tour = [unvisited.pop(unvisited.index(start_vertex))]
     
-    # Choose a random starting vertex
-    start_vertex = random.randint(0, num_vertices - 1)
-    tour.append(start_vertex)
-    visited[start_vertex] = True
+    while unvisited:
+        farthest_vertex = -1
+        max_distance = -1
+        
+        for v in unvisited:
+            min_distance = float('inf')
+            for tour_vertex in tour:
+                if adjacency_matrix[tour_vertex][v] < min_distance:
+                    min_distance = adjacency_matrix[tour_vertex][v]
+            
+            if min_distance > max_distance:
+                max_distance = min_distance
+                farthest_vertex = v
+        
+        best_insertion = -1
+        min_increase = float('inf')
+        
+        for i, tour_vertex in enumerate(tour):
+            if i == 0:
+                prev_vertex = tour[-1]
+            else:
+                prev_vertex = tour[i - 1]
+            increase = adjacency_matrix[prev_vertex][farthest_vertex] + adjacency_matrix[farthest_vertex][tour_vertex] - adjacency_matrix[prev_vertex][tour_vertex]
+            if increase < min_increase:
+                min_increase = increase
+                best_insertion = i
+        
+        tour.insert(best_insertion, farthest_vertex)
+        unvisited.remove(farthest_vertex)
     
-    while len(tour) < num_vertices:
-        next_vertex = find_farthest_vertex(adjacency_matrix, tour, visited)
-        
-        # Insert the next_vertex at the optimal position in the tour
-        min_insert_cost = float('inf')
-        optimal_position = 0
-        
-        for i in range(len(tour)):
-            current_cost = adjacency_matrix[tour[i]][next_vertex] + adjacency_matrix[next_vertex][tour[(i + 1) % len(tour)]]
-            if current_cost < min_insert_cost:
-                min_insert_cost = current_cost
-                optimal_position = i
-        
-        tour.insert((optimal_position + 1) % len(tour), next_vertex)
-        visited[next_vertex] = True
-    print(tour)
     return tour
 
 # prim's and kruskal's

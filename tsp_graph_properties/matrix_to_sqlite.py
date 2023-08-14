@@ -6,19 +6,47 @@ sys.path.append('/home/rachel/Desktop/traveling-salesman')
 from main import *
 import networkx as nx
 import sqlite3
+from sklearn.cluster import SpectralClustering
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+
+
+def get_optimal_k_value(adjacency_matrix):
+    similarity_matrix = np.exp(-adjacency_matrix)
+
+    # Range of k values to consider
+    k_values = range(2, 8)
+
+    # Initialize a list to store silhouette scores
+    silhouette_scores = []
+
+    # Loop through different k values
+    for k in k_values:
+        kmeans = KMeans(n_clusters=k, n_init=10, random_state=0)
+        labels = kmeans.fit_predict(similarity_matrix)
+        silhouette_scores.append(silhouette_score(similarity_matrix, labels))
+
+    # Plot the silhouette scores
+    # plt.plot(k_values, silhouette_scores, marker='o')
+    # plt.xlabel('Number of Clusters (k)')
+    # plt.ylabel('Silhouette Score')
+    # plt.title('Silhouette Score for Different k Values (K-Means)')
+    # plt.show()
+
+    # Find the index of the maximum silhouette score
+    optimal_k_index = np.argmax(silhouette_scores)
+
+    # Calculate the corresponding optimal k value
+    optimal_k = k_values[optimal_k_index]
+    return optimal_k
 
 # Load adjacency matrix from file
-def get_data(file_path):
+def get_data_matrices(file_path):
     adjacency_matrix = parse_matrix_data(file_path) # Calculate the weighted similarity measure (sum of weights for each node)
-    weighted_similarity = np.sum(adjacency_matrix, axis=1)
     
-    differences = np.diff(weighted_similarity) # Calculate differences and second differences
-    second_differences = np.diff(differences)
-    
-    elbow_index = np.argmax(second_differences) + 1 # Find the index where second differences start to increase
-    
-                                 # The corresponding x-value is the optimal k value
-    optimal_k = elbow_index + 1  # Adding 1 to convert to 1-based indexing
+    optimal_k = get_optimal_k_value(adjacency_matrix)
+
+    intracluster_variance = get_intracluster_variance (adjacency_matrix, optimal_k)
     
     intercluster_variance = get_intercluster_variance(adjacency_matrix, optimal_k)
 
@@ -36,7 +64,7 @@ def get_data(file_path):
     # plt.legend()
     # plt.show()
     
-    return optimal_k, intercluster_variance, number_of_cities, standard_deviation
+    return optimal_k, intercluster_variance, intracluster_variance, number_of_cities, standard_deviation
 
 def calculate_standard_deviation(adjacency_matrix):
     distances = []
@@ -86,23 +114,58 @@ def get_intercluster_variance(adjacency_matrix, k):
     
     return intercluster_variance
 
+def get_intracluster_variance(adjacency_matrix, k):
+    # Create a graph from the adjacency matrix
+    graph = nx.Graph(adjacency_matrix)
+    
+    # Perform k-means clustering
+    kmeans = KMeans(n_clusters=k, n_init=10, random_state=0)
+    node_labels = kmeans.fit_predict(adjacency_matrix)
+    
+    # Create a dictionary to store nodes in each cluster
+    clusters = {i: [] for i in range(k)}
+    for i, label in enumerate(node_labels):
+        clusters[label].append(i)
+    
+    # Calculate cluster centroids
+    centroids = []
+    for cluster_nodes in clusters.values():
+        cluster_subgraph = graph.subgraph(cluster_nodes)
+        centroid = np.mean(np.array(cluster_subgraph.nodes), axis=0)
+        centroids.append(centroid)
+    
+    # Calculate intra-cluster variance
+    intra_cluster_variance = 0
+    for label, cluster_nodes in clusters.items():
+        cluster_subgraph = graph.subgraph(cluster_nodes)
+        centroid = centroids[label]
+        for node in cluster_subgraph.nodes:
+            distance = np.linalg.norm(node - centroid) ** 2
+            intra_cluster_variance += distance
+    
+    # Divide by total number of nodes
+    total_nodes = len(graph.nodes)
+    intra_cluster_variance /= total_nodes
+    
+    return intra_cluster_variance
+
 def process_folder_and_store_results(folder_path, db_name):
     # Connect to the SQLite database
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
 
     # Create a table if it doesn't exist
-    cursor.execute('''CREATE TABLE IF NOT EXISTS graph_properties (filename TEXT PRIMARY KEY, optimal_k REAL, intercluster_variance REAL, number_of_cities REAL, standard_deviation REAL)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS graph_properties (filename TEXT PRIMARY KEY, optimal_k REAL, intercluster_variance REAL, intracluster_variance REAL, number_of_cities REAL, standard_deviation REAL)''')
 
     # Iterate through the files in the folder
     for filename in os.listdir(folder_path):
         if filename.endswith('.txt'):
             file_path = os.path.join(folder_path, filename)
-            optimal_k, intercluster_variance, number_of_cities, standard_deviation = get_data(file_path)
+            optimal_k, intercluster_variance, intracluster_variance, number_of_cities, standard_deviation = get_data_matrices(file_path)
 
             # Insert the filename and optimal_k_value into the database
-            cursor.execute('''INSERT OR REPLACE INTO graph_properties (filename, optimal_k, intercluster_variance, number_of_cities, standard_deviation) VALUES (?, ?, ?, ?, ?)''',
-                           (filename, int(optimal_k), int(intercluster_variance), int(number_of_cities), int(standard_deviation)))
+            cursor.execute('''INSERT OR REPLACE INTO graph_properties (filename, optimal_k, intercluster_variance, intracluster_variance, number_of_cities, standard_deviation) VALUES (?, ?, ?, ?, ?, ?)''',
+                           (filename, int(optimal_k), int(intercluster_variance), int(intracluster_variance), int(number_of_cities), int(standard_deviation)))
 
     # Commit the changes and close the connection
     connection.commit()
@@ -119,19 +182,19 @@ def check_database_values(db_name):
 
     # Print the retrieved rows (filename and result)
     for row in rows:
-        print(f"Filename: {row[0]}, Optimal K Value: {row[1]}, Intercluster Variance: {row[2]}, Number of Cities: {row[3]}, Standard Deviation: {row[4]}")
+        print(f"Filename: {row[0]}, Optimal K Value: {row[1]}, Intercluster Variance: {row[2]}, Intracluster Variance: {row[3]}, Number of Cities: {row[4]}, Standard Deviation: {row[5]}")
 
     # Close the connection
     connection.close()
 
 # visualize_adjacency_matrix(file_path)
 # get_number_of_k_clusters(file_path)
-process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix', 'potayto.db')
-process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/lower_diagonal_matrix', 'potayto.db')
-process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_diag_row', 'potayto.db')
-process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix', 'potayto.db')
+# process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix', '../tsp.db')
+# process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/lower_diagonal_matrix', '../tsp.db')
+# process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_diag_row', '../tsp.db')
+# process_folder_and_store_results('/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix', '../tsp.db')
 
-check_database_values('potayto.db')
+# check_database_values('../tsp.db')
 # check(file_path)
 
 
