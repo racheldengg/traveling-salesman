@@ -3,11 +3,13 @@ from asyncio import gather
 from tsp_algorithms.coordinate_data import *
 from tsp_algorithms.matrix_data import *
 import os
+import shutil
 import numpy as np
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 import sqlite3
+import gzip
 
 def parse_matrix_data(file_path): 
     folder_name = file_path.split('/')[-2]
@@ -188,8 +190,6 @@ def main(file_path, approx_algorithm):
         return optimal_distance
     if folder_name == 'full_matrix' or folder_name == 'lower_diagonal_matrix' or folder_name == 'upper_diag_row' or folder_name == 'upper_row_matrix':
          adjacency_matrix = parse_matrix_data(file_path)
-         print('adjacency matrix')
-         print(adjacency_matrix)
          tour_order = approx_algorithm(adjacency_matrix)
          optimal_distance = get_matrix_length(tour_order, adjacency_matrix)
          print(optimal_distance)
@@ -207,6 +207,7 @@ def insert_to_database(db_name, file_path, approx_algorithm):
     cursor.execute('''CREATE TABLE IF NOT EXISTS graph_data (filename TEXT, approx_algorithm TEXT, length REAL)''')
     cursor.execute('''INSERT INTO graph_data (filename, approx_algorithm, length) VALUES (?, ?, ?)''',
                            (filename, approx_algorithm, int(length)))
+    # graph_data_with_complexities
     connection.commit()
     connection.close()
 
@@ -226,29 +227,75 @@ def check_database_values(db_name):
     # Close the connection
     connection.close()
 
-db_name = 'tsp.db'
-folder_path = ['/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix/', 
-               '/home/rachel/Desktop/traveling-salesman/tsp_decoded/lower_diagonal_matrix/', 
-               '/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_diag_row/', 
-               '/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix/'
-               ]
-for folder in folder_path:
-    file_list = file_list = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+def insert_test_values_into_db():
+    db_name = 'tsp.db'
+    folder_path = ['/home/rachel/Desktop/traveling-salesman/tsp_decoded/full_matrix/', 
+                '/home/rachel/Desktop/traveling-salesman/tsp_decoded/lower_diagonal_matrix/', 
+                '/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_diag_row/', 
+                '/home/rachel/Desktop/traveling-salesman/tsp_decoded/upper_row_matrix/'] # change with respect to algorithm 
 
-    for i in range(5):
-        for file in file_list:
-            print(file)
-            file_path = folder + file
-            insert_to_database('tsp.db', file_path, kruskal_dfs_matrix)
-        check_database_values('tsp.db')
+    for folder in folder_path:
+        file_list = file_list = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
 
-# insert_to_database(db_name, file_path, nearest_neighbor_coordinates)
-# check_database_values(db_name)
-# parameters for main: path to file, approximation algorithm, type of distance to calculate, how to get the adjacency matrix
-# length = main('/home/rachel/Desktop/traveling-salesman/tsp_decoded/ceil_2D/dsj1000.tsp.txt', farthest_insertion_coordinates)
-# print(length)
+        for i in range(5):
+            for file in file_list:
+                print(file)
+                file_path = folder + file
+                insert_to_database(db_name, file_path, kruskal_dfs_matrix) # change algorithm
+            check_database_values(db_name)
 
+def insert_complexity_values_into_db(db_name):
+    connection = sqlite3.connect(db_name)
+    cursor = connection.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS algorithm_complexities (approx_algorithm TEXT, complexity TEXT)''')
+    cursor.execute('''INSERT INTO algorithm_complexities (approx_algorithm, complexity) VALUES (?, ?)''', ('prim_dfs', 'O(n^2log(n))'))
+    cursor.execute('''INSERT INTO algorithm_complexities (approx_algorithm, complexity) VALUES (?, ?)''', ('kruskal_dfs', 'O(n^2log(n))'))
+    cursor.execute('''INSERT INTO algorithm_complexities (approx_algorithm, complexity) VALUES (?, ?)''', ('nearest_neighbor', 'O(n^2)'))
+    cursor.execute('''INSERT INTO algorithm_complexities (approx_algorithm, complexity) VALUES (?, ?)''', ('farthest_insertion', 'O(n^2)'))
+    cursor.execute('''INSERT INTO algorithm_complexities (approx_algorithm, complexity) VALUES (?, ?)''', ('nearest_insertion', 'O(n^2)'))
+    connection.commit()
+    connection.close()
 
-# kruskal_mst_create_tsp_tour
-# Total length of tour: 797562.3212599959
-# Total time taken for algorithm: 106.60002422332764
+def move_optimal_solution():
+    source_folder = "/home/rachel/Desktop/traveling-salesman/tsp_extracted"  # Replace with the source folder path
+    destination_folder = "/home/rachel/Desktop/traveling-salesman/tsp_decoded_optimal_solution"  # Replace with the destination folder path
+
+    # Create the destination folder if it doesn't exist
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
+
+    # Iterate through the files in the source folder
+    for filename in os.listdir(source_folder):
+        if filename.endswith(".opt.tour.gz"):
+            source_path = os.path.join(source_folder, filename)
+            destination_path = os.path.join(destination_folder, filename)
+            shutil.move(source_path, destination_path)
+            print(f"Moved {filename} to {destination_folder}")
+
+def extract_optimal_solution(output_folder, source_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Iterate through the files in the source folder
+    for filename in os.listdir(source_folder):
+        if filename.endswith(".opt.tour.gz"):
+            file_path = os.path.join(source_folder, filename)
+            output_file = os.path.splitext(filename)[0] + ".txt"
+            output_path = os.path.join(output_folder, output_file)
+            
+            with gzip.open(file_path, "rt") as f:
+                content = f.read()
+                
+                with open(output_path, "w") as output:
+                    output.write(content)
+
+    print("Extraction complete. Files saved in", output_folder)
+
+output_folder = '/home/rachel/Desktop/traveling-salesman/tsp_optimal'
+source_folder = '/home/rachel/Desktop/traveling-salesman/tsp_decoded_optimal_solution'
+extract_optimal_solution(output_folder, source_folder)
+# move_optimal_solution()
+# insert_complexity_values_into_db('tsp.db')
+
+#complete_data
+#graph_data_with_properties
