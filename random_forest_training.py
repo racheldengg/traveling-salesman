@@ -40,7 +40,7 @@ df['length_difference'] = df['approx_algorithm_length'] - df['optimal_tour_lengt
 
 
 
-X = df.drop(['approx_algorithm', 'tsp_instance', 'approx_algorithm_length', 'approx_algorithm_complexity', 'intercluster_variance', 'intracluster_variance', 'optimal_tour_length'], axis=1)
+X = df.drop(['approx_algorithm', 'tsp_instance', 'approx_algorithm_length', 'approx_algorithm_complexity', 'intercluster_variance', 'intracluster_variance', 'optimal_tour_length', 'length_difference'], axis=1)
 print(X.columns)
 y = encoded_y
 print(y)
@@ -61,11 +61,11 @@ print("Mean Squared Error:", mse)
 
 # Data
 new_data = {
-    'optimal_k': [7.0],
-    'number_of_cities': [180.0],
-    'standard_deviation': [3735.0],
-    'intra_to_inter_ratio': [2655.0/14521834.0],
-    'length_difference': [0.0]
+    'optimal_k': [4.0],
+    'number_of_cities': [175.0],
+    'standard_deviation': [65.0],
+    'intra_to_inter_ratio': [715.0/4294.0],
+    # 'length_difference': [10.0]
 }
 # Make predictions using the trained model for new instances
 new_instance_features = pd.DataFrame(new_data)  # Replace with new instance features
@@ -73,7 +73,9 @@ new_instance_features = pd.DataFrame(new_data)  # Replace with new instance feat
 # Predict the differences for each approximation algorithm
 predicted_differences = model.predict(new_instance_features)
 
-recommended_algorithm_index = np.argmax(predicted_differences)
+print(predicted_differences)
+
+recommended_algorithm_index = np.argmin(predicted_differences)
 
 # List of approximation algorithms
 approximation_algorithms = ['approx_algorithm_farthest_insertion', 'approx_algorithm_kruskal_dfs', 'approx_algorithm_nearest_insertion', 'approx_algorithm_nearest_neighbor', 'approx_algorithm_prim_dfs']
