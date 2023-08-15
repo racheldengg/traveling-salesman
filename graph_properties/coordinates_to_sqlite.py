@@ -4,9 +4,9 @@ import numpy as np
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-from tsp_algorithms.coordinate_data import *
+from tour_length_algorithms.coordinate_data import *
 from main import *
-from tsp_graph_properties.matrix_to_sqlite import *
+from graph_properties.matrix_to_sqlite import *
 
 def adapt_coordinates_to_matrix(file_path):
     vertices_x = []
@@ -81,6 +81,6 @@ def insert_to_database(db_name, file_path, optimal_k, intercluster_variance, int
     connection.commit()
     connection.close()
 
-file_path = '/home/rachel/Desktop/traveling-salesman/tsp_decoded/ceil_2D/pla33810.tsp.txt'
+file_path = '/home/rachel/Desktop/traveling-salesman/txt_tsp_data/ceil_2D/dsj1000.tsp.txt'
 db_name = '../tsp.db'
 get_data_coordinates(file_path)

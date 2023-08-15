@@ -1,12 +1,10 @@
 from asyncio import gather
 # import matplotlib.pyplot as plt
-from tsp_algorithms.coordinate_data import *
-from tsp_algorithms.matrix_data import *
+from tour_length_algorithms.coordinate_data import *
+from tour_length_algorithms.matrix_data import *
 import os
 import shutil
 import numpy as np
-from sklearn.cluster import SpectralClustering
-from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 import sqlite3
 import gzip
@@ -293,9 +291,10 @@ def extract_optimal_solution(output_folder, source_folder):
 
 output_folder = '/home/rachel/Desktop/traveling-salesman/tsp_optimal'
 source_folder = '/home/rachel/Desktop/traveling-salesman/tsp_decoded_optimal_solution'
-extract_optimal_solution(output_folder, source_folder)
+# extract_optimal_solution(output_folder, source_folder)
 # move_optimal_solution()
 # insert_complexity_values_into_db('tsp.db')
 
 #complete_data
 #graph_data_with_properties
+# preprocessed_data
