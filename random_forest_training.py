@@ -39,9 +39,10 @@ df['intra_to_inter_ratio'] =  df['intracluster_variance'] / df['intercluster_var
 df['length_difference'] = df['approx_algorithm_length'] - df['optimal_tour_length']
 
 
-
+print(df.columns)
 X = df.drop(['approx_algorithm', 'tsp_instance', 'approx_algorithm_length', 'approx_algorithm_complexity', 'intercluster_variance', 'intracluster_variance', 'optimal_tour_length', 'length_difference'], axis=1)
 print(X.columns)
+sys.exit()
 y = encoded_y
 print(y)
 # Split data into training and testing sets

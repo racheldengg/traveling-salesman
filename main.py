@@ -202,8 +202,8 @@ def insert_to_database(db_name, file_path, approx_algorithm):
     approx_algorithm = approx_algorithm.__name__.replace("_coordinates", "")
     print(length, filename, approx_algorithm)
     # Create a table if it doesn't exist
-    cursor.execute('''CREATE TABLE IF NOT EXISTS graph_data (filename TEXT, approx_algorithm TEXT, length REAL)''')
-    cursor.execute('''INSERT INTO graph_data (filename, approx_algorithm, length) VALUES (?, ?, ?)''',
+    cursor.execute('''CREATE TABLE IF NOT EXISTS graph_data_redone (filename TEXT, approx_algorithm TEXT, length REAL)''')
+    cursor.execute('''INSERT INTO graph_data_redone (filename, approx_algorithm, length) VALUES (?, ?, ?)''',
                            (filename, approx_algorithm, int(length)))
     # graph_data_with_complexities
     connection.commit()
@@ -215,7 +215,7 @@ def check_database_values(db_name):
     cursor = connection.cursor()
 
     # Execute a SELECT query to retrieve the stored values
-    cursor.execute('''SELECT * FROM graph_data''')
+    cursor.execute('''SELECT * FROM graph_data_redone''')
     rows = cursor.fetchall()
 
     # Print the retrieved rows (filename and result)
@@ -289,8 +289,9 @@ def extract_optimal_solution(output_folder, source_folder):
 
     print("Extraction complete. Files saved in", output_folder)
 
-output_folder = '/home/rachel/Desktop/traveling-salesman/tsp_optimal'
-source_folder = '/home/rachel/Desktop/traveling-salesman/tsp_decoded_optimal_solution'
+
+# output_folder = '/home/rachel/Desktop/traveling-salesman/tsp_optimal'
+# source_folder = '/home/rachel/Desktop/traveling-salesman/tsp_decoded_optimal_solution'
 # extract_optimal_solution(output_folder, source_folder)
 # move_optimal_solution()
 # insert_complexity_values_into_db('tsp.db')
@@ -298,3 +299,19 @@ source_folder = '/home/rachel/Desktop/traveling-salesman/tsp_decoded_optimal_sol
 #complete_data
 #graph_data_with_properties
 # preprocessed_data
+#graph_data
+
+db_name = 'tsp.db'
+folder_path = '/home/rachel/Desktop/traveling-salesman/txt_tsp_data/euclid_2d/'
+file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+
+for file in file_list:
+    file_path = folder_path + file
+    insert_to_database(db_name, file_path, kruskal_dfs_coordinates)
+    insert_to_database(db_name, file_path, prim_dfs_coordinates)
+    insert_to_database(db_name, file_path, farthest_insertion_coordinates)
+    insert_to_database(db_name, file_path, nearest_insertion_coordinates)
+    insert_to_database(db_name, file_path, nearest_neighbor_coordinates)
+
+check_database_values(db_name)
+
