@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zoomable Euclidean Plane with Plotly.js</title>
+    <!-- Include Plotly.js library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="//d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <h1>Zoomable Euclidean Plane with Plotly.js</h1>
+
+    <!-- Create a div element for the plot -->
+    <div id="plot"></div>
+
+    <script>
+        // Sample data points
+        const data = [
+            {
+                x: [],
+                y: [],
+                mode: 'markers',
+                type: 'scatter'
+            }
+        ];
+
+        // Layout options (customize as needed)
+        const layout = {
+            xaxis: {
+                title: 'X-Axis'
+            },
+            yaxis: {
+                title: 'Y-Axis'
+            },
+            margin: {
+                l: 40, r: 40, b: 40, t: 40
+            }
+        };
+
+        // Create the plot
+        Plotly.newPlot('plot', data, layout);
+
+        // Add zoom on scroll functionality
+        document.getElementById('plot').addEventListener('wheel', function (event) {
+            const update = {
+                'xaxis.autorange': false, // Disable automatic x-axis range adjustment
+                'yaxis.autorange': false, // Disable automatic y-axis range adjustment
+            };
+
+            // Adjust the x-axis and y-axis ranges based on scroll direction
+            if (event.deltaY > 0) {
+                update['xaxis.range'] = [layout.xaxis.range[0] * 1.2, layout.xaxis.range[1] * 1.2];
+                update['yaxis.range'] = [layout.yaxis.range[0] * 1.2, layout.yaxis.range[1] * 1.2];
+            } else {
+                update['xaxis.range'] = [layout.xaxis.range[0] / 1.2, layout.xaxis.range[1] / 1.2];
+                update['yaxis.range'] = [layout.yaxis.range[0] / 1.2, layout.yaxis.range[1] / 1.2];
+            }
+
+            // Update the plot with the new axis ranges
+            Plotly.update('plot', {}, update);
+
+            // Prevent the default scroll behavior
+            event.preventDefault();
+        });
+
+        // Add a plotly_click event listener to the plot
+        var myPlot = document.getElementById("plot")
+        d3.select(".plotly").on('click', function(d, i) {
+            var e = d3.event;
+            var bgrect = document.getElementsByClassName('gridlayer')[0].getBoundingClientRect();
+            var x = ((e.x - bgrect['x']) / (bgrect['width'])) * (myPlot.layout.xaxis.range[1] - myPlot.layout.xaxis.range[0]) + myPlot.layout.xaxis.range[0];
+            var y = ((e.y - bgrect['y']) / (bgrect['height'])) * (myPlot.layout.yaxis.range[0] - myPlot.layout.yaxis.range[1]) + myPlot.layout.yaxis.range[1];
+            if ((x >= myPlot.layout.xaxis.range[0] && x <= myPlot.layout.xaxis.range[1]) &&
+                (y >= myPlot.layout.yaxis.range[0] && y <= myPlot.layout.yaxis.range[1])) {
+                    Plotly.extendTraces(myPlot, {
+                        x: [[x]],
+                        y: [[y]]
+                    }, [0]);
+                console.log("Location X:"+x+" Y:"+y)
+
+                console.log(myPlot.data[0].x)
+                console.log(myPlot.data[0].y)
+                
+            }
+        });
+    </script>
+</body>
+</html>
