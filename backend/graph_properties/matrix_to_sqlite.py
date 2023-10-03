@@ -11,6 +11,32 @@ from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 
 
+# Load adjacency matrix from file
+def get_data_matrices(file_path):
+    adjacency_matrix = parse_matrix_data(file_path) # Calculate the weighted similarity measure (sum of weights for each node)
+    
+    optimal_k = get_optimal_k_value(adjacency_matrix)
+
+    intracluster_variance = get_intracluster_variance (adjacency_matrix, optimal_k)
+    
+    intercluster_variance = get_intercluster_variance(adjacency_matrix, optimal_k)
+
+    number_of_cities = len(adjacency_matrix)
+
+    standard_deviation = calculate_standard_deviation(adjacency_matrix)
+
+
+    # x = np.arange(1, len(weighted_similarity) + 1) # Plot the elbow method for visualization
+    # plt.plot(x, weighted_similarity, marker='o')
+    # plt.axvline(x=optimal_k, color='r', linestyle='--', label='Elbow Value')
+    # plt.xlabel('Number of Clusters')
+    # plt.ylabel('Weighted Similarity')
+    # plt.title('Elbow Method for Optimal Clusters (Weighted)')
+    # plt.legend()
+    # plt.show()
+    
+    return optimal_k, intercluster_variance, intracluster_variance, number_of_cities, standard_deviation
+
 def get_optimal_k_value(adjacency_matrix):
     similarity_matrix = np.exp(-adjacency_matrix)
 
@@ -39,32 +65,6 @@ def get_optimal_k_value(adjacency_matrix):
     # Calculate the corresponding optimal k value
     optimal_k = k_values[optimal_k_index]
     return optimal_k
-
-# Load adjacency matrix from file
-def get_data_matrices(file_path):
-    adjacency_matrix = parse_matrix_data(file_path) # Calculate the weighted similarity measure (sum of weights for each node)
-    
-    optimal_k = get_optimal_k_value(adjacency_matrix)
-
-    intracluster_variance = get_intracluster_variance (adjacency_matrix, optimal_k)
-    
-    intercluster_variance = get_intercluster_variance(adjacency_matrix, optimal_k)
-
-    number_of_cities = len(adjacency_matrix)
-
-    standard_deviation = calculate_standard_deviation(adjacency_matrix)
-
-
-    # x = np.arange(1, len(weighted_similarity) + 1) # Plot the elbow method for visualization
-    # plt.plot(x, weighted_similarity, marker='o')
-    # plt.axvline(x=optimal_k, color='r', linestyle='--', label='Elbow Value')
-    # plt.xlabel('Number of Clusters')
-    # plt.ylabel('Weighted Similarity')
-    # plt.title('Elbow Method for Optimal Clusters (Weighted)')
-    # plt.legend()
-    # plt.show()
-    
-    return optimal_k, intercluster_variance, intracluster_variance, number_of_cities, standard_deviation
 
 def calculate_standard_deviation(adjacency_matrix):
     distances = []

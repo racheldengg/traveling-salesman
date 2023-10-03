@@ -5,14 +5,23 @@
     <!-- Include Plotly.js library -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="//d3js.org/d3.v5.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/main.css">
+
 </head>
 <body>
-    <h1>Zoomable Euclidean Plane with Plotly.js</h1>
+    <h1>simple UI for data insertion</h1>
 
     <!-- Create a div element for the plot -->
-    <div id="plot"></div>
+    <div id="container">
+        <div id="plot"></div>
+        <button onclick="getData()">Add to dataset!</button>
+    </div>
 
     <script>
+        function getData() {
+            console.log(data[0].x)
+            console.log(data[0].y)
+        }
         // Sample data points
         const data = [
             {
@@ -75,11 +84,8 @@
                         x: [[x]],
                         y: [[y]]
                     }, [0]);
-                console.log("Location X:"+x+" Y:"+y)
-
                 console.log(myPlot.data[0].x)
                 console.log(myPlot.data[0].y)
-                
             }
         });
     </script>

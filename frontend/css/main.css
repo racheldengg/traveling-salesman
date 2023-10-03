@@ -1,0 +1,28 @@
+#container {
+    height: 100%;
+    width: 75%;
+    margin-left: 12.5%;
+    margin-top: 8%;
+}
+#plot {
+    border-style: solid;
+    border-color: black;
+    padding: 5px;
+    border-radius: 10px;
+}
+button{
+    margin-top: 1%;
+    border-style: solid;
+    border-color: black;
+    background-color: white;
+    border-radius: 5px;
+}
+
+button:hover{
+    cursor: pointer;
+}
+
+h1{
+    font-family: sans-serif;
+    margin-left: 30%;
+}
