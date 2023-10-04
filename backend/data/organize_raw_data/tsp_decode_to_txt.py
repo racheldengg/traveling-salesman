@@ -2,7 +2,7 @@ import gzip
 import os
 import chardet
 
-# after extracting the tar files, i'm decoding the files into /tsp_decoded
+# after extracting the tar files, i'm decoding the files into /txt_tsp_data
 def read_gz_file_all():
     source_folder = '../gz_tsp_data/'
     destination_folder = '../txt_tsp_data/'

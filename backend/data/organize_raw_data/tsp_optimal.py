@@ -1,7 +1,7 @@
 import sqlite3
 
 def insert_optimal_solution(file_path):
-    conn = sqlite3.connect('../tsp.db')
+    conn = sqlite3.connect('../../tsp.db')
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT * FROM complete_data")
@@ -29,4 +29,4 @@ def insert_optimal_solution(file_path):
     conn.close()
 
 
-insert_optimal_solution('/home/rachel/Desktop/traveling-salesman/txt_tsp_optimal/tsp_optimal.txt')
+insert_optimal_solution('/home/rachel/Desktop/tsp-part-2/traveling-salesman/backend/data/txt_tsp_optimal/tsp_optimal.txt')
