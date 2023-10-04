@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import sqlite3
 import gzip
 
-def parse_matrix_data(file_path): 
+def parse_matrix_data(file_path):
+    # puts data from the file into a 2D array in memory
     folder_name = file_path.split('/')[-2]
     start_flag = 'EDGE_WEIGHT_SECTION'
     end_flags = ['DISPLAY_DATA_SECTION', 'EOF']
@@ -119,13 +120,13 @@ def get_matrix_length(tour_order, adj_matrix): # don't need tour_length_strategy
         from_vertex = tour_order[i]
         to_vertex = tour_order[i + 1]
         length += adj_matrix[from_vertex][to_vertex]
-        print(length)
 
     # Add distance from last to first vertex to complete the tour
     length += adj_matrix[tour_order[-1]][tour_order[0]]
     return length
 
 def parse_coordinate_data(file_path, x_values, y_values, node_labels):
+    # puts data from the file into 2 arrays in memory
     full_matrix_directory = os.path.dirname(os.path.dirname(file_path))
     folder_name = full_matrix_directory.split('/')[-1]
 
@@ -301,17 +302,17 @@ def extract_optimal_solution(output_folder, source_folder):
 # preprocessed_data
 #graph_data
 
-db_name = 'tsp.db'
-folder_path = '/home/rachel/Desktop/traveling-salesman/txt_tsp_data/euclid_2d/'
-file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+# db_name = 'tsp.db'
+# folder_path = '/home/rachel/Desktop/traveling-salesman/txt_tsp_data/euclid_2d/'
+# file_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
 
-for file in file_list:
-    file_path = folder_path + file
-    insert_to_database(db_name, file_path, kruskal_dfs_coordinates)
-    insert_to_database(db_name, file_path, prim_dfs_coordinates)
-    insert_to_database(db_name, file_path, farthest_insertion_coordinates)
-    insert_to_database(db_name, file_path, nearest_insertion_coordinates)
-    insert_to_database(db_name, file_path, nearest_neighbor_coordinates)
+# for file in file_list:
+#     file_path = folder_path + file
+#     insert_to_database(db_name, file_path, kruskal_dfs_coordinates)
+#     insert_to_database(db_name, file_path, prim_dfs_coordinates)
+#     insert_to_database(db_name, file_path, farthest_insertion_coordinates)
+#     insert_to_database(db_name, file_path, nearest_insertion_coordinates)
+#     insert_to_database(db_name, file_path, nearest_neighbor_coordinates)
 
-check_database_values(db_name)
+# check_database_values(db_name)
 

@@ -7,6 +7,7 @@ import sys
 import itertools
 from collections import deque
 
+
 # distance for euclidean coordinates
 def euclidean_distance(x1, y1, x2, y2):
     return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
@@ -49,10 +50,10 @@ def tour_length(vertices_x, vertices_y, tour, distance_calculation):
     total_length = 0
     for i in range(len(tour)-1):
         total_length += distance_calculation(vertices_x[tour[i]], vertices_y[tour[i]],
-                                           vertices_x[tour[i+1]], vertices_y[tour[i+1]])    
+                                        vertices_x[tour[i+1]], vertices_y[tour[i+1]])    
 
     total_length += distance_calculation(vertices_x[tour[-1]], vertices_y[tour[-1]],
-                                       vertices_x[tour[0]], vertices_y[tour[0]])
+                                    vertices_x[tour[0]], vertices_y[tour[0]])
     return total_length
 
 
@@ -93,7 +94,7 @@ def geo_distance_np(x_mat, y_mat, x_mat_t, y_mat_t):
     return 6731 * c
 
 
-# trying to implement nearest neighbor
+# nearest neighbor
 def nearest_neighbor_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dist):
     # start_time = time.time()
     visited = []
@@ -358,8 +359,6 @@ def kruskal_dfs_coordinates(vertices_x, vertices_y, distance_metric, adj_mat_dis
     x_ind_mat = None 
     y_ind_mat = None 
     
-    # print('merging sloth')
-
     flattened = np.zeros(num_vertices ** 2, dtype={
         'names': ('dist', 'u', 'v'),
         'formats': ('f8', 'i8', 'i8')

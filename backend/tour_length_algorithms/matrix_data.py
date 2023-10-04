@@ -16,7 +16,6 @@ def tour_length_matrix(adj_matrix, tour_order):
     length += adj_matrix[tour_order[-1]][tour_order[0]]
     return length
 
-
 # nearest neighbor
 def nearest_neighbor_matrix(adjacency_matrix):
     num_vertices = len(adjacency_matrix)
